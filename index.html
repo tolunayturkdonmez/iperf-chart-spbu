@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPerf Throughput Analyzer — WiFi Test Grafiği</title>
+  <meta name="description" content="iPerf çıktısını yükleyin, WiFi throughput grafiğinizi anında oluşturun ve PNG olarak kaydedin.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-card card">
+      <div class="loading-spinner"></div>
+      <p class="loading-text" id="loadingText">Lütfen bekleyin, dosya işleniyor…</p>
+      <p class="loading-sub" id="loadingSub"></p>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <img src="tp-link-logo.png" alt="TP-Link Logo" class="tp-link-logo" id="tpLinkLogo">
+      </div>
+      <div class="header-text">
+        <h1>iPerf Throughput Analyzer</h1>
+        <p class="subtitle">WiFi throughput test sonuçlarınızı görselleştirin</p>
+      </div>
+    </header>
+
+    <!-- Input Section -->
+    <section class="input-section card" id="inputSection">
+      <div class="section-header">
+        <h2>
+          <span class="section-icon">📂</span>
+          iPerf Sonuç Dosyasını Yükleyin
+        </h2>
+        <p class="section-desc">iPerf test çıktınızı içeren <code>.txt</code> dosyasını seçin. Sadece <code>[SUM]</code> satırları işlenecektir.</p>
+      </div>
+
+      <!-- File Upload Area -->
+      <div class="file-upload-area" id="fileUploadArea">
+        <input type="file" id="fileInput" accept=".txt,.log,.text" hidden>
+        <div class="upload-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect x="4" y="8" width="40" height="32" rx="4" stroke="#4fc1e9" stroke-width="2.5" fill="none"/>
+            <path d="M24 18v12M18 24l6-6 6 6" stroke="#4fc1e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="upload-text">Dosyanızı buraya sürükleyin veya <span class="upload-link">dosya seçin</span></p>
+        <p class="upload-hint">.txt veya .log formatı desteklenir</p>
+      </div>
+
+      <!-- File Info (shown after file is selected) -->
+      <div class="file-info" id="fileInfo" style="display:none;">
+        <div class="file-info-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#4fc1e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#4fc1e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="file-info-details">
+          <span class="file-info-name" id="fileName">—</span>
+          <span class="file-info-size" id="fileSize">—</span>
+        </div>
+        <button class="btn-remove-file" id="btnRemoveFile" title="Dosyayı kaldır">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <button class="btn-primary" id="btnParse" disabled>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h14M10 3l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sonuçları Grafiğe Aktar
+      </button>
+    </section>
+
+    <!-- Error Message -->
+    <div class="error-message" id="errorMessage" style="display:none;">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v5M10 13.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="errorText"></span>
+    </div>
+
+    <!-- Stats Cards -->
+    <section class="stats-section" id="statsSection" style="display:none;">
+      <div class="stat-card card">
+        <span class="stat-label">Ortalama Throughput</span>
+        <span class="stat-value" id="statAvg">—</span>
+        <span class="stat-unit">Mbps</span>
+      </div>
+      <div class="stat-card card">
+        <span class="stat-label">Maksimum</span>
+        <span class="stat-value" id="statMax">—</span>
+        <span class="stat-unit">Mbps</span>
+      </div>
+      <div class="stat-card card">
+        <span class="stat-label">Minimum</span>
+        <span class="stat-value" id="statMin">—</span>
+        <span class="stat-unit">Mbps</span>
+      </div>
+      <div class="stat-card card">
+        <span class="stat-label">Süre</span>
+        <span class="stat-value" id="statCount">—</span>
+        <span class="stat-unit">Saniye</span>
+      </div>
+    </section>
+
+    <!-- Chart Section -->
+    <section class="chart-section card" id="chartSection" style="display:none;">
+      <div class="section-header">
+        <h2>
+          <span class="section-icon">📊</span>
+          Throughput Grafiği
+          <span class="badge">Mbps</span>
+        </h2>
+      </div>
+      <p class="zoom-hint">💡 Grafik üzerinde fare ile sürükleyerek bir bölgeyi yakınlaştırabilirsiniz.</p>
+      <div class="chart-container">
+        <canvas id="throughputChart"></canvas>
+      </div>
+      <div class="chart-actions">
+        <button class="btn-reset-zoom" id="btnResetZoom" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1v6h6M17 17v-6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.6 6.6A7 7 0 003.5 3.5L1 7M2.4 11.4a7 7 0 0012.1 3.1L17 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Normal Görünüme Dön
+        </button>
+        <button class="btn-save" id="btnSave">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17 13v3a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16v-3M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Grafiği Görsel Olarak Kaydet
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>iPerf Throughput Analyzer &middot; Tüm veriler tarayıcınızda işlenir, sunucuya gönderilmez.</p>
+    </footer>
+  </div>
+
+  <!-- Save Modal Overlay -->
+  <div class="modal-overlay" id="saveModal" style="display:none;">
+    <div class="modal card">
+      <div class="modal-header">
+        <h3>📥 Grafik Kaydetme Bilgileri</h3>
+        <button class="modal-close" id="modalClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Grafik görseline eklenecek cihaz bilgilerini girin.</p>
+
+      <div class="modal-form">
+        <div class="form-group">
+          <label for="inputModel">Model</label>
+          <input type="text" id="inputModel" placeholder="Örn: Archer AXE300">
+        </div>
+
+        <div class="form-group">
+          <label for="inputFirmware">Yazılım Sürümü</label>
+          <input type="text" id="inputFirmware" placeholder="Örn: 1.1.2 Build 20240501">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="selectBand">Band</label>
+            <select id="selectBand">
+              <option value="" disabled selected>Band seçin</option>
+              <option value="2.4GHz">2.4 GHz</option>
+              <option value="5GHz">5 GHz</option>
+              <option value="6GHz">6 GHz</option>
+              <option value="MLO">MLO</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="selectChannel">Kanal Bilgisi</label>
+            <select id="selectChannel" disabled>
+              <option value="" disabled selected>Önce band seçin</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions modal-actions-split">
+        <button class="btn-modal-cancel" id="modalCancel">İptal</button>
+        <div class="modal-actions-right">
+          <button class="btn-modal-save-only" id="modalSaveOnly">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 5.5V13a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 13V3a1.5 1.5 0 011.5-1.5H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 1.5l3 3M7.5 9l6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Sonucu Kaydet
+          </button>
+          <button class="btn-modal-download" id="modalDownload">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 10v2.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 12.5V10M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Sonucu Görsel Olarak İndir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Gallery Button -->
+  <a href="gallery.html" class="fab-gallery" id="fabGallery" title="Kayıtlı Test Sonuçları">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M2 13l4-4 3 3 4-5 5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7.5" r="1.5" fill="currentColor"/></svg>
+    <span>Kayıtlı Test Sonuçları</span>
+  </a>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

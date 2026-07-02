@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kayıtlı Test Sonuçları — iPerf Throughput Analyzer</title>
+  <meta name="description" content="iPerf test sonuçlarından oluşturulan throughput grafiklerinin galeri sayfası.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .gallery-header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .gallery-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .gallery-header .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Search Bar */
+    .gallery-search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      box-shadow: var(--card-shadow);
+      transition: border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+    }
+    .gallery-search-bar:focus-within {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(79, 193, 233, 0.12);
+    }
+    .gallery-search-bar svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .gallery-search-bar input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    .gallery-search-bar input::placeholder {
+      color: var(--text-muted);
+    }
+    .search-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: none;
+      transition: color var(--transition-fast);
+    }
+    .search-clear:hover {
+      color: var(--error-text);
+    }
+
+    /* Gallery Actions */
+    .gallery-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .gallery-count {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .btn-clear-gallery {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      border: 1px solid var(--error-border);
+      border-radius: var(--radius-sm);
+      background: var(--error-bg);
+      color: var(--error-text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-fast), transform var(--transition-bounce);
+    }
+    .btn-clear-gallery:hover {
+      background: #fecaca;
+      transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .gallery-empty {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+    }
+    .gallery-empty-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+    .gallery-empty p {
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+
+    /* 3-column Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .gallery-item {
+      padding: 0;
+      overflow: hidden;
+      animation: fadeSlideUp 0.5s ease forwards;
+      display: flex;
+      flex-direction: column;
+    }
+    .gallery-item-title {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .gallery-item-title h3 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      word-break: break-word;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .gallery-item-title .gallery-date {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .gallery-item-image {
+      width: 100%;
+      display: block;
+      cursor: pointer;
+      transition: transform var(--transition-smooth);
+      flex: 1;
+      object-fit: cover;
+    }
+    .gallery-item-image:hover {
+      transform: scale(1.01);
+    }
+    .gallery-item-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--card-border);
+    }
+    .gallery-meta-cell {
+      padding: 10px 8px;
+      text-align: center;
+      border-right: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+    }
+    .gallery-meta-cell:nth-child(2n) {
+      border-right: none;
+    }
+    .gallery-meta-cell:nth-last-child(-n+2) {
+      border-bottom: none;
+    }
+    .gallery-meta-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .gallery-meta-value {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .gallery-item-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 12px;
+      gap: 8px;
+      border-top: 1px solid var(--card-border);
+    }
+    .btn-download-item, .btn-delete-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), background var(--transition-fast);
+    }
+    .btn-download-item {
+      border: none;
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 2px 6px rgba(79, 193, 233, 0.2);
+    }
+    .btn-download-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(79, 193, 233, 0.35);
+    }
+    .btn-delete-item {
+      border: 1px solid var(--error-border);
+      background: white;
+      color: var(--error-text);
+    }
+    .btn-delete-item:hover {
+      background: var(--error-bg);
+    }
+
+    /* Lightbox */
+    .lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+      animation: modalFadeIn 0.2s ease;
+    }
+    .lightbox-overlay img {
+      max-width: 95%;
+      max-height: 95vh;
+      border-radius: 8px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+    }
+
+    /* No Results */
+    .gallery-no-results {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 900px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+    }
+    @media (max-width: 560px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .gallery-item-meta {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header class="gallery-header">
+      <div class="logo-area" style="margin-bottom:16px;">
+        <img src="tp-link-logo.png" alt="TP-Link Logo" class="tp-link-logo">
+      </div>
+      <h1>📋 Kayıtlı Test Sonuçları</h1>
+      <p class="subtitle">Kaydedilen test sonuçları bu sayfada listelenir</p>
+      <a href="index.html" class="nav-link" style="margin-top:12px;">← Analiz Sayfasına Dön</a>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="gallery-search-bar" id="searchBar">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M12.5 12.5L16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="text" id="searchInput" placeholder="Model, yazılım sürümü, band veya kanal ile arayın…" autocomplete="off">
+      <button class="search-clear" id="searchClear" title="Aramayı temizle">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="gallery-actions" id="galleryActions" style="display:none;">
+      <span class="gallery-count" id="galleryCount"></span>
+      <button class="btn-clear-gallery" id="btnClearGallery">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.75 3.5h10.5M4.67 3.5V2.33a1.17 1.17 0 011.16-1.16h2.34a1.17 1.17 0 011.16 1.16V3.5m1.75 0v8.17a1.17 1.17 0 01-1.16 1.16H4.08a1.17 1.17 0 01-1.16-1.16V3.5h8.16z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Tümünü Sil
+      </button>
+    </div>
+
+    <div id="galleryContent"></div>
+
+    <footer class="app-footer">
+      <p>iPerf Throughput Analyzer &middot; Tüm veriler tarayıcınızda saklanır.</p>
+    </footer>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    const galleryContent = document.getElementById('galleryContent');
+    const galleryActions = document.getElementById('galleryActions');
+    const galleryCount = document.getElementById('galleryCount');
+    const btnClearGallery = document.getElementById('btnClearGallery');
+    const searchInput = document.getElementById('searchInput');
+    const searchClear = document.getElementById('searchClear');
+
+    let allGallery = [];
+
+    function loadGallery() {
+      allGallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
+      renderGallery(allGallery);
+    }
+
+    function renderGallery(gallery) {
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = query
+        ? gallery.filter(item => {
+            const haystack = [
+              item.model || '', item.firmware || '',
+              item.band || '', item.channel || ''
+            ].join(' ').toLowerCase();
+            return query.split(/\s+/).every(word => haystack.includes(word));
+          })
+        : gallery;
+
+      if (allGallery.length === 0) {
+        galleryActions.style.display = 'none';
+        galleryContent.innerHTML = `
+          <div class="gallery-empty card">
+            <div class="gallery-empty-icon">📭</div>
+            <p>Henüz kaydedilmiş test sonucu bulunmuyor.</p>
+            <a href="index.html" class="nav-link">Analiz Sayfasına Git →</a>
+          </div>
+        `;
+        return;
+      }
+
+      galleryActions.style.display = 'flex';
+      galleryCount.textContent = query
+        ? `${filtered.length} / ${allGallery.length} sonuç`
+        : `${allGallery.length} kayıt`;
+
+      if (filtered.length === 0) {
+        galleryContent.innerHTML = `
+          <div class="gallery-grid">
+            <div class="gallery-no-results">🔍 "<strong>${escapeHtml(searchInput.value)}</strong>" ile eşleşen sonuç bulunamadı.</div>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="gallery-grid">';
+
+      filtered.forEach((item, filteredIndex) => {
+        const realIndex = allGallery.indexOf(item);
+
+        const titleParts = [];
+        if (item.model && item.model !== '—') titleParts.push(item.model);
+        if (item.firmware && item.firmware !== '—') titleParts.push(item.firmware);
+        if (item.band && item.band !== '—') titleParts.push(item.band);
+        if (item.channel && item.channel !== '—') titleParts.push(item.channel);
+        const title = titleParts.length > 0 ? titleParts.join(' — ') : 'İsimsiz Grafik';
+
+        const date = item.timestamp ? formatDate(item.timestamp) : '—';
+
+        html += `
+          <div class="gallery-item card" data-index="${realIndex}">
+            <div class="gallery-item-title">
+              <h3 title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
+              <div class="gallery-date">${date}</div>
+            </div>
+            <img src="${item.image}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src)">
+            <div class="gallery-item-meta">
+              <div class="gallery-meta-cell">
+                <div class="gallery-meta-label">Model</div>
+                <div class="gallery-meta-value" title="${escapeHtml(item.model || '—')}">${escapeHtml(item.model || '—')}</div>
+              </div>
+              <div class="gallery-meta-cell">
+                <div class="gallery-meta-label">Yazılım</div>
+                <div class="gallery-meta-value" title="${escapeHtml(item.firmware || '—')}">${escapeHtml(item.firmware || '—')}</div>
+              </div>
+              <div class="gallery-meta-cell">
+                <div class="gallery-meta-label">Band</div>
+                <div class="gallery-meta-value">${escapeHtml(item.band || '—')}</div>
+              </div>
+              <div class="gallery-meta-cell">
+                <div class="gallery-meta-label">Kanal</div>
+                <div class="gallery-meta-value" title="${escapeHtml(item.channel || '—')}">${escapeHtml(item.channel || '—')}</div>
+              </div>
+            </div>
+            <div class="gallery-item-actions">
+              <button class="btn-download-item" onclick="downloadItem(${realIndex})">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M12.25 9.33v2.34a1.17 1.17 0 01-1.17 1.16H2.92a1.17 1.17 0 01-1.17-1.16V9.33M7 2.33v7M4.08 6.42L7 9.33l2.92-2.91" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                İndir
+              </button>
+              <button class="btn-delete-item" onclick="deleteItem(${realIndex})">
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M1.75 3.5h10.5M4.67 3.5V2.33a1.17 1.17 0 011.16-1.16h2.34a1.17 1.17 0 011.16 1.16V3.5m1.75 0v8.17a1.17 1.17 0 01-1.16 1.16H4.08a1.17 1.17 0 01-1.16-1.16V3.5h8.16z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Sil
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      galleryContent.innerHTML = html;
+    }
+
+    // Search
+    searchInput.addEventListener('input', () => {
+      searchClear.style.display = searchInput.value ? 'block' : 'none';
+      renderGallery(allGallery);
+    });
+
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.style.display = 'none';
+      renderGallery(allGallery);
+      searchInput.focus();
+    });
+
+    // Clear all
+    btnClearGallery.addEventListener('click', () => {
+      if (confirm('Tüm kaydedilmiş test sonuçlarını silmek istediğinizden emin misiniz?')) {
+        localStorage.removeItem('iperfGallery');
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        loadGallery();
+      }
+    });
+
+    window.deleteItem = function(index) {
+      const gallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
+      gallery.splice(index, 1);
+      localStorage.setItem('iperfGallery', JSON.stringify(gallery));
+      loadGallery();
+    };
+
+    window.downloadItem = function(index) {
+      const gallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
+      const item = gallery[index];
+      if (!item) return;
+      const link = document.createElement('a');
+      const fileName = item.fileName || 'iperf_throughput';
+      link.download = `${fileName}.png`;
+      link.href = item.image;
+      link.click();
+    };
+
+    window.openLightbox = function(src) {
+      const overlay = document.createElement('div');
+      overlay.className = 'lightbox-overlay';
+      overlay.onclick = () => overlay.remove();
+      const img = document.createElement('img');
+      img.src = src;
+      overlay.appendChild(img);
+      document.body.appendChild(overlay);
+      document.addEventListener('keydown', function handler(e) {
+        if (e.key === 'Escape') {
+          overlay.remove();
+          document.removeEventListener('keydown', handler);
+        }
+      });
+    };
+
+    function formatDate(isoStr) {
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('tr-TR', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch {
+        return '—';
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    loadGallery();
+  })();
+  </script>
+</body>
+</html>
