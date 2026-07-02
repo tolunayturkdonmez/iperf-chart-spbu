@@ -328,11 +328,21 @@
     }
   });
 
-  modalSaveOnly.addEventListener('click', () => {
+  modalSaveOnly.addEventListener('click', async () => {
     const { canvasDataUrl, entry } = buildChartImage();
-    saveToGallery(entry);
-    showToast('✅ Kayıtlı Test Sonuçlarına Kaydedildi');
-    closeModal();
+    modalSaveOnly.disabled = true;
+    modalSaveOnly.textContent = 'Kaydediliyor…';
+    try {
+      await saveTestResult(entry);
+      showToast('✅ Kayıtlı Test Sonuçlarına Kaydedildi');
+      closeModal();
+    } catch (e) {
+      console.error('Firebase kayıt hatası:', e);
+      showToast('❌ Kayıt sırasında hata oluştu');
+    } finally {
+      modalSaveOnly.disabled = false;
+      modalSaveOnly.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 5.5V13a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 13V3a1.5 1.5 0 011.5-1.5H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 1.5l3 3M7.5 9l6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Sonucu Kaydet';
+    }
   });
 
   modalDownload.addEventListener('click', () => {
@@ -742,16 +752,7 @@
     return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
   }
 
-  function saveToGallery(entry) {
-    try {
-      const gallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
-      gallery.unshift(entry);
-      if (gallery.length > 50) gallery.length = 50;
-      localStorage.setItem('iperfGallery', JSON.stringify(gallery));
-    } catch (e) {
-      console.warn('Galeri kaydedilemedi:', e);
-    }
-  }
+  // saveToGallery is now handled by saveTestResult() in firebase-config.js
 
   // ===== Toast =====
   let toastTimer = null;

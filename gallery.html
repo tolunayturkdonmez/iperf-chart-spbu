@@ -106,19 +106,31 @@
       transform: translateY(-1px);
     }
 
-    /* Empty State */
-    .gallery-empty {
+    /* Empty & Loading States */
+    .gallery-empty, .gallery-loading {
       text-align: center;
       padding: 60px 24px;
       color: var(--text-muted);
     }
-    .gallery-empty-icon {
+    .gallery-empty-icon, .gallery-loading-icon {
       font-size: 3rem;
       margin-bottom: 12px;
     }
-    .gallery-empty p {
+    .gallery-empty p, .gallery-loading p {
       font-size: 0.95rem;
       margin-bottom: 20px;
+    }
+    .gallery-loading .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--card-border);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* 3-column Grid */
@@ -127,7 +139,6 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
     }
-
     .gallery-item {
       padding: 0;
       overflow: hidden;
@@ -267,6 +278,34 @@
       grid-column: 1 / -1;
     }
 
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      z-index: 3000;
+      padding: 14px 28px;
+      background: #1e293b;
+      color: #f1f5f9;
+      border-radius: 100px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
+      white-space: nowrap;
+    }
+    .toast.toast-visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .toast.toast-success { background: linear-gradient(135deg, #059669, #10b981); }
+    .toast.toast-error { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
     @media (max-width: 900px) {
       .gallery-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -277,9 +316,6 @@
       .gallery-grid {
         grid-template-columns: 1fr;
         gap: 16px;
-      }
-      .gallery-item-meta {
-        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
@@ -316,9 +352,18 @@
     <div id="galleryContent"></div>
 
     <footer class="app-footer">
-      <p>iPerf Throughput Analyzer &middot; Tüm veriler tarayıcınızda saklanır.</p>
+      <p>iPerf Throughput Analyzer &middot; Veriler Firebase üzerinde saklanır.</p>
     </footer>
   </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
 
   <script>
   (function() {
@@ -333,22 +378,41 @@
 
     let allGallery = [];
 
-    function loadGallery() {
-      allGallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
-      renderGallery(allGallery);
+    // ===== Load from Firestore =====
+    async function loadGallery() {
+      galleryContent.innerHTML = `
+        <div class="gallery-loading card">
+          <div class="loading-spinner"></div>
+          <p>Test sonuçları yükleniyor…</p>
+        </div>
+      `;
+
+      try {
+        allGallery = await getAllTestResults();
+        renderGallery();
+      } catch (e) {
+        console.error('Firestore yükleme hatası:', e);
+        galleryContent.innerHTML = `
+          <div class="gallery-empty card">
+            <div class="gallery-empty-icon">⚠️</div>
+            <p>Veriler yüklenirken hata oluştu. Lütfen sayfayı yenileyin.</p>
+            <a href="index.html" class="nav-link">Analiz Sayfasına Git →</a>
+          </div>
+        `;
+      }
     }
 
-    function renderGallery(gallery) {
+    function renderGallery() {
       const query = searchInput.value.trim().toLowerCase();
       const filtered = query
-        ? gallery.filter(item => {
+        ? allGallery.filter(item => {
             const haystack = [
               item.model || '', item.firmware || '',
               item.band || '', item.channel || ''
             ].join(' ').toLowerCase();
             return query.split(/\s+/).every(word => haystack.includes(word));
           })
-        : gallery;
+        : allGallery;
 
       if (allGallery.length === 0) {
         galleryActions.style.display = 'none';
@@ -378,9 +442,7 @@
 
       let html = '<div class="gallery-grid">';
 
-      filtered.forEach((item, filteredIndex) => {
-        const realIndex = allGallery.indexOf(item);
-
+      filtered.forEach(item => {
         const titleParts = [];
         if (item.model && item.model !== '—') titleParts.push(item.model);
         if (item.firmware && item.firmware !== '—') titleParts.push(item.firmware);
@@ -388,15 +450,18 @@
         if (item.channel && item.channel !== '—') titleParts.push(item.channel);
         const title = titleParts.length > 0 ? titleParts.join(' — ') : 'İsimsiz Grafik';
 
-        const date = item.timestamp ? formatDate(item.timestamp) : '—';
+        const date = item.createdAt ? formatDate(item.createdAt) : '—';
+
+        // Use imageUrl from Firebase Storage (not base64)
+        const imgSrc = item.imageUrl || '';
 
         html += `
-          <div class="gallery-item card" data-index="${realIndex}">
+          <div class="gallery-item card" data-id="${item.id}">
             <div class="gallery-item-title">
               <h3 title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
               <div class="gallery-date">${date}</div>
             </div>
-            <img src="${item.image}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src)">
+            <img src="${imgSrc}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src)" loading="lazy">
             <div class="gallery-item-meta">
               <div class="gallery-meta-cell">
                 <div class="gallery-meta-label">Model</div>
@@ -416,11 +481,11 @@
               </div>
             </div>
             <div class="gallery-item-actions">
-              <button class="btn-download-item" onclick="downloadItem(${realIndex})">
+              <button class="btn-download-item" onclick="downloadItem('${item.id}')">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M12.25 9.33v2.34a1.17 1.17 0 01-1.17 1.16H2.92a1.17 1.17 0 01-1.17-1.16V9.33M7 2.33v7M4.08 6.42L7 9.33l2.92-2.91" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 İndir
               </button>
-              <button class="btn-delete-item" onclick="deleteItem(${realIndex})">
+              <button class="btn-delete-item" onclick="deleteItem('${item.id}', '${item.storagePath || ''}')">
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M1.75 3.5h10.5M4.67 3.5V2.33a1.17 1.17 0 011.16-1.16h2.34a1.17 1.17 0 011.16 1.16V3.5m1.75 0v8.17a1.17 1.17 0 01-1.16 1.16H4.08a1.17 1.17 0 01-1.16-1.16V3.5h8.16z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Sil
               </button>
@@ -433,47 +498,78 @@
       galleryContent.innerHTML = html;
     }
 
-    // Search
+    // ===== Search =====
     searchInput.addEventListener('input', () => {
       searchClear.style.display = searchInput.value ? 'block' : 'none';
-      renderGallery(allGallery);
+      renderGallery();
     });
 
     searchClear.addEventListener('click', () => {
       searchInput.value = '';
       searchClear.style.display = 'none';
-      renderGallery(allGallery);
+      renderGallery();
       searchInput.focus();
     });
 
-    // Clear all
-    btnClearGallery.addEventListener('click', () => {
-      if (confirm('Tüm kaydedilmiş test sonuçlarını silmek istediğinizden emin misiniz?')) {
-        localStorage.removeItem('iperfGallery');
+    // ===== Clear All (Firebase) =====
+    btnClearGallery.addEventListener('click', async () => {
+      if (!confirm('Tüm kaydedilmiş test sonuçlarını silmek istediğinizden emin misiniz?')) return;
+
+      btnClearGallery.disabled = true;
+      btnClearGallery.textContent = 'Siliniyor…';
+
+      try {
+        await deleteAllTestResults();
         searchInput.value = '';
         searchClear.style.display = 'none';
+        showToast('✅ Tüm kayıtlar silindi', 'success');
         loadGallery();
+      } catch (e) {
+        console.error('Toplu silme hatası:', e);
+        showToast('❌ Silme sırasında hata oluştu', 'error');
+      } finally {
+        btnClearGallery.disabled = false;
+        btnClearGallery.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.75 3.5h10.5M4.67 3.5V2.33a1.17 1.17 0 011.16-1.16h2.34a1.17 1.17 0 011.16 1.16V3.5m1.75 0v8.17a1.17 1.17 0 01-1.16 1.16H4.08a1.17 1.17 0 01-1.16-1.16V3.5h8.16z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Tümünü Sil';
       }
     });
 
-    window.deleteItem = function(index) {
-      const gallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
-      gallery.splice(index, 1);
-      localStorage.setItem('iperfGallery', JSON.stringify(gallery));
-      loadGallery();
+    // ===== Delete Single Item (Firebase) =====
+    window.deleteItem = async function(docId, storagePath) {
+      if (!confirm('Bu test sonucunu silmek istediğinizden emin misiniz?')) return;
+
+      try {
+        await deleteTestResult(docId, storagePath);
+        showToast('✅ Kayıt silindi', 'success');
+        loadGallery();
+      } catch (e) {
+        console.error('Silme hatası:', e);
+        showToast('❌ Silme sırasında hata oluştu', 'error');
+      }
     };
 
-    window.downloadItem = function(index) {
-      const gallery = JSON.parse(localStorage.getItem('iperfGallery') || '[]');
-      const item = gallery[index];
-      if (!item) return;
-      const link = document.createElement('a');
-      const fileName = item.fileName || 'iperf_throughput';
-      link.download = `${fileName}.png`;
-      link.href = item.image;
-      link.click();
+    // ===== Download Item =====
+    window.downloadItem = function(docId) {
+      const item = allGallery.find(g => g.id === docId);
+      if (!item || !item.imageUrl) return;
+
+      // Download via fetch to avoid CORS popup
+      fetch(item.imageUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `${item.fileName || 'iperf_throughput'}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+        })
+        .catch(() => {
+          // Fallback: open in new tab
+          window.open(item.imageUrl, '_blank');
+        });
     };
 
+    // ===== Lightbox =====
     window.openLightbox = function(src) {
       const overlay = document.createElement('div');
       overlay.className = 'lightbox-overlay';
@@ -490,6 +586,20 @@
       });
     };
 
+    // ===== Toast =====
+    let toastTimer = null;
+    function showToast(message, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast toast-visible toast-${type || 'success'}`;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.className = 'toast';
+        toastTimer = null;
+      }, 2500);
+    }
+
+    // ===== Helpers =====
     function formatDate(isoStr) {
       try {
         const d = new Date(isoStr);
@@ -508,6 +618,7 @@
       return div.innerHTML;
     }
 
+    // ===== Init =====
     loadGallery();
   })();
   </script>
