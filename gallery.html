@@ -452,8 +452,8 @@
 
         const date = item.createdAt ? formatDate(item.createdAt) : '—';
 
-        // Use imageUrl from Firebase Storage (not base64)
-        const imgSrc = item.imageUrl || '';
+        // Use base64 image from Firestore if available, otherwise fallback to Storage URL
+        const imgSrc = item.image || item.imageUrl || '';
 
         html += `
           <div class="gallery-item card" data-id="${item.id}">
@@ -550,10 +550,22 @@
     // ===== Download Item =====
     window.downloadItem = function(docId) {
       const item = allGallery.find(g => g.id === docId);
-      if (!item || !item.imageUrl) return;
+      if (!item) return;
 
-      // Download via fetch to avoid CORS popup
-      fetch(item.imageUrl)
+      const imgSrc = item.image || item.imageUrl;
+      if (!imgSrc) return;
+
+      // If it is base64, download directly
+      if (imgSrc.startsWith('data:')) {
+        const link = document.createElement('a');
+        link.download = `${item.fileName || 'iperf_throughput'}.png`;
+        link.href = imgSrc;
+        link.click();
+        return;
+      }
+
+      // Fallback for old Storage URLs
+      fetch(imgSrc)
         .then(res => res.blob())
         .then(blob => {
           const url = URL.createObjectURL(blob);
@@ -564,8 +576,7 @@
           URL.revokeObjectURL(url);
         })
         .catch(() => {
-          // Fallback: open in new tab
-          window.open(item.imageUrl, '_blank');
+          window.open(imgSrc, '_blank');
         });
     };
 
