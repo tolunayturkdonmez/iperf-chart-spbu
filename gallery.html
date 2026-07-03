@@ -316,12 +316,12 @@
     .btn-clear-filters {
       width: 100%;
       padding: 10px 16px;
-      border: 1px solid var(--card-border);
+      border: 1px solid #feb2b2;
       border-radius: var(--radius-sm);
-      background: white;
+      background: #fff5f5;
       font-family: 'Inter', sans-serif;
       font-size: 0.85rem;
-      color: var(--text-secondary);
+      color: #c53030;
       cursor: pointer;
       font-weight: 600;
       transition: all var(--transition-fast);
@@ -332,19 +332,93 @@
       align-items: center;
       justify-content: center;
     }
-    .btn-clear-filters:hover {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      border-color: var(--text-muted);
+    .btn-clear-filters:hover:not(:disabled) {
+      background: #fed7d7;
+      color: #9b2c2c;
+      border-color: #fc8181;
     }
-    .btn-clear-filters:active {
+    .btn-clear-filters:active:not(:disabled) {
       transform: scale(0.98);
+    }
+    .btn-clear-filters:disabled {
+      background: #f1f5f9;
+      border-color: var(--card-border);
+      color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.55;
     }
 
     /* Searchable Select (Dropdown Combobox) */
     .searchable-select {
       position: relative;
       width: 100%;
+    }
+    .select-trigger {
+      width: 100%;
+      padding: 10px 32px 10px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      background: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      transition: border var(--transition-fast), box-shadow var(--transition-fast);
+      height: 42px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      position: relative;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .select-trigger::after {
+      content: "";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--text-secondary);
+      pointer-events: none;
+      transition: transform 0.2s ease;
+    }
+    .select-trigger.active {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .select-trigger.active::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+    .select-trigger.disabled-trigger {
+      background: #f1f5f9 !important;
+      cursor: not-allowed !important;
+      color: #94a3b8 !important;
+      border-color: var(--card-border) !important;
+    }
+    .select-trigger.disabled-trigger::after {
+      border-top-color: #cbd5e1;
+    }
+    .search-select-input {
+      width: calc(100% - 16px);
+      margin: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+    .search-select-input:focus {
+      border-color: var(--accent-primary);
     }
     .searchable-select-dropdown {
       position: absolute;
@@ -356,15 +430,18 @@
       border: 1px solid var(--card-border);
       border-radius: var(--radius-sm);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      max-height: 200px;
+      max-height: 230px;
       overflow-y: auto;
       margin-top: 4px;
       animation: modalFadeIn 0.15s ease;
+      display: flex;
+      flex-direction: column;
     }
     .searchable-select-options {
       list-style: none;
       padding: 0;
       margin: 0;
+      overflow-y: auto;
     }
     .searchable-select-options li {
       padding: 10px 14px;
@@ -524,8 +601,9 @@
           <button class="btn-text-link" id="btnManageDevices" style="font-size:0.75rem; border:none; background:none; color:var(--accent-dark); cursor:pointer; text-decoration:underline; font-weight:600; padding:0;">[Yönet]</button>
         </div>
         <div class="searchable-select" id="selectModelContainer">
-          <input type="text" id="filterModel" class="filter-select" placeholder="Tümü (Tüm Modeller)" autocomplete="off">
+          <div class="filter-select select-trigger" tabindex="0">Tümü (Tüm Modeller)</div>
           <div class="searchable-select-dropdown" style="display:none;">
+            <input type="text" class="search-select-input" placeholder="Model ara..." autocomplete="off">
             <ul class="searchable-select-options"></ul>
           </div>
         </div>
@@ -533,8 +611,9 @@
       <div class="filter-group">
         <label>Yazılım Sürümü</label>
         <div class="searchable-select" id="selectFirmwareContainer">
-          <input type="text" id="filterFirmware" class="filter-select" placeholder="Tümü (Tüm Yazılımlar)" autocomplete="off" disabled>
+          <div class="filter-select select-trigger disabled-trigger" tabindex="0">Tümü (Tüm Yazılımlar)</div>
           <div class="searchable-select-dropdown" style="display:none;">
+            <input type="text" class="search-select-input" placeholder="Yazılım ara..." autocomplete="off">
             <ul class="searchable-select-options"></ul>
           </div>
         </div>
@@ -832,8 +911,6 @@
     const searchInput = document.getElementById('searchInput');
     const searchClear = document.getElementById('searchClear');
 
-    const filterModel = document.getElementById('filterModel');
-    const filterFirmware = document.getElementById('filterFirmware');
     const filterBand = document.getElementById('filterBand');
     const btnClearFilters = document.getElementById('btnClearFilters');
     const btnManageDevices = document.getElementById('btnManageDevices');
@@ -858,8 +935,9 @@
     class SearchableSelect {
       constructor(containerId, placeholder, onSelect) {
         this.container = document.getElementById(containerId);
-        this.input = this.container.querySelector('.filter-select');
+        this.trigger = this.container.querySelector('.select-trigger');
         this.dropdown = this.container.querySelector('.searchable-select-dropdown');
+        this.searchInput = this.container.querySelector('.search-select-input');
         this.optionsList = this.container.querySelector('.searchable-select-options');
         this.placeholder = placeholder;
         this.onSelect = onSelect;
@@ -900,8 +978,8 @@
             li.className = 'selected';
           }
           
-          li.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // Prevent input blur from hiding dropdown too early
+          li.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.selectOption(opt.value, opt.text);
           });
           
@@ -911,9 +989,10 @@
 
       selectOption(value, text) {
         this.selectedValue = value;
-        this.input.value = value ? text : '';
-        this.input.placeholder = this.placeholder;
+        this.trigger.textContent = value ? text : this.placeholder;
+        this.trigger.classList.remove('active');
         this.dropdown.style.display = 'none';
+        this.searchInput.value = '';
         this.renderOptions();
         if (this.onSelect) this.onSelect(value);
       }
@@ -921,47 +1000,58 @@
       setValue(value) {
         this.selectedValue = value;
         const opt = this.options.find(o => o.value === value);
-        this.input.value = opt ? (opt.value ? opt.text : '') : '';
+        this.trigger.textContent = opt ? (opt.value ? opt.text : this.placeholder) : this.placeholder;
         this.renderOptions();
       }
 
       setDisabled(disabled) {
         this.disabled = disabled;
-        this.input.disabled = disabled;
         if (disabled) {
-          this.input.style.background = '#f1f5f9';
-          this.input.style.cursor = 'not-allowed';
-          this.input.placeholder = 'Pasif';
+          this.trigger.classList.add('disabled-trigger');
           this.selectedValue = '';
-          this.input.value = '';
+          this.trigger.textContent = this.placeholder;
+          this.dropdown.style.display = 'none';
         } else {
-          this.input.style.background = '';
-          this.input.style.cursor = '';
-          this.input.placeholder = this.placeholder;
+          this.trigger.classList.remove('disabled-trigger');
+          this.trigger.textContent = this.selectedValue ? (this.options.find(o => o.value === this.selectedValue)?.text || this.placeholder) : this.placeholder;
         }
       }
 
       initEvents() {
-        this.input.addEventListener('focus', () => {
+        this.trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
           if (this.disabled) return;
-          this.dropdown.style.display = 'block';
-          this.renderOptions(this.input.value);
-        });
-
-        this.input.addEventListener('blur', () => {
-          this.dropdown.style.display = 'none';
-          const opt = this.options.find(o => o.value === this.selectedValue);
-          this.input.value = opt ? (opt.value ? opt.text : '') : '';
-        });
-
-        this.input.addEventListener('input', () => {
-          if (this.disabled) return;
-          this.dropdown.style.display = 'block';
-          this.renderOptions(this.input.value);
           
-          if (this.input.value.trim() === '') {
-            this.selectedValue = '';
-            if (this.onSelect) this.onSelect('');
+          const isOpen = this.dropdown.style.display === 'block';
+          // Close all other dropdowns
+          document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.style.display = 'none');
+          document.querySelectorAll('.select-trigger').forEach(t => t.classList.remove('active'));
+
+          if (!isOpen) {
+            this.dropdown.style.display = 'block';
+            this.trigger.classList.add('active');
+            this.searchInput.value = '';
+            this.renderOptions();
+            setTimeout(() => this.searchInput.focus(), 50);
+          } else {
+            this.dropdown.style.display = 'none';
+            this.trigger.classList.remove('active');
+          }
+        });
+
+        this.searchInput.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent dropdown from closing when clicking inside search input
+        });
+
+        this.searchInput.addEventListener('input', () => {
+          this.renderOptions(this.searchInput.value);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!this.container.contains(e.target)) {
+            this.dropdown.style.display = 'none';
+            this.trigger.classList.remove('active');
           }
         });
       }
@@ -1089,6 +1179,13 @@
       const selectedModel = modelSelect.selectedValue;
       const selectedFirmware = firmwareSelect.selectedValue;
       const selectedBand = filterBand.value;
+
+      // Update clear filters button state (disabled when no active filter exists)
+      const hasSearch = query.length > 0;
+      const hasModel = !!selectedModel;
+      const hasFirmware = !!selectedFirmware;
+      const hasBand = !!selectedBand;
+      btnClearFilters.disabled = !(hasSearch || hasModel || hasFirmware || hasBand);
 
       const filtered = allGallery.filter(item => {
         // Text Search Match
