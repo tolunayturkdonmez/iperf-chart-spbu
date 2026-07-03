@@ -268,6 +268,52 @@
       background: var(--error-bg);
     }
 
+    /* Filters Bar */
+    .gallery-filters {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .filter-group {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filter-group label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .filter-select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      background: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      transition: border var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .filter-select:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .filter-select:disabled {
+      background: #f1f5f9;
+      cursor: not-allowed;
+      color: #94a3b8;
+    }
+
     /* Lightbox */
     .lightbox-overlay {
       position: fixed;
@@ -393,6 +439,25 @@
       </button>
     </div>
 
+    <!-- Dropdown Filters (Model & Yazılım Listbox) -->
+    <div class="gallery-filters">
+      <div class="filter-group">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label for="filterModel">Cihaz Modeli</label>
+          <button class="btn-text-link" id="btnManageDevices" style="font-size:0.75rem; border:none; background:none; color:var(--accent-dark); cursor:pointer; text-decoration:underline; font-weight:600; padding:0;">[Yönet]</button>
+        </div>
+        <select id="filterModel" class="filter-select">
+          <option value="" selected>Tümü (Tüm Modeller)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterFirmware">Yazılım Sürümü</label>
+        <select id="filterFirmware" class="filter-select" disabled>
+          <option value="" selected>Tümü (Tüm Yazılımlar)</option>
+        </select>
+      </div>
+    </div>
+
     <div class="gallery-actions" id="galleryActions" style="display:none;">
       <span class="gallery-count" id="galleryCount"></span>
       <button class="btn-clear-gallery" id="btnClearGallery">
@@ -406,6 +471,54 @@
     <footer class="app-footer">
       <p>iPerf Throughput Analyzer &middot; Veriler Firebase üzerinde saklanır.</p>
     </footer>
+  </div>
+
+  <!-- Model & Yazılım Yönetimi Modali (White-toned overlay) -->
+  <div class="password-modal-overlay" id="deviceMgmtModal" style="display:none; z-index:1100;">
+    <div class="modal card" style="max-width: 480px; width: 100%;">
+      <div class="modal-header">
+        <h3>🛠️ Model & Yazılım Yönetimi</h3>
+        <button class="modal-close" id="deviceMgmtModalClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Sistemde kayıtlı cihaz modellerini ve yazılım sürümlerini yönetin.</p>
+
+      <div class="modal-form">
+        <!-- Section 1: Add Model -->
+        <div class="form-group" style="border-bottom: 1px solid var(--card-border); padding-bottom: 16px; margin-bottom: 16px;">
+          <label style="font-weight:700;">Yeni Model Tanımla</label>
+          <div style="display:flex; gap:8px; margin-top:6px;">
+            <input type="text" id="inputNewModelName" placeholder="Örn: Archer BE800">
+            <button class="btn-modal-save-only" id="btnAddModel" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Model Ekle</button>
+          </div>
+        </div>
+
+        <!-- Section 2: Manage Firmwares -->
+        <div class="form-group">
+          <label for="selectMgmtModel" style="font-weight:700;">Yazılım Sürümlerini Yönet</label>
+          <select id="selectMgmtModel" class="filter-select" style="margin-top:6px; margin-bottom:12px;">
+            <option value="" disabled selected>Model seçin</option>
+          </select>
+          
+          <div id="mgmtFirmwareSection" style="display:none;">
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+              <input type="text" id="inputNewFirmwareName" placeholder="Örn: 1.0.5 Build 20240415">
+              <button class="btn-modal-save-only" id="btnAddFirmware" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Yazılım Ekle</button>
+            </div>
+            
+            <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Kayıtlı Sürümler</label>
+            <ul id="mgmtFirmwareList" style="list-style:none; padding:0; margin:6px 0 0 0; max-height:150px; overflow-y:auto; border:1px solid var(--card-border); border-radius:var(--radius-sm); background:#f8fafc;">
+              <!-- Yazılımlar buraya listelenecek -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--card-border); padding-top:16px;">
+        <button class="btn-modal-cancel" id="btnDeviceMgmtDone" style="width:100%;">Kapat</button>
+      </div>
+    </div>
   </div>
 
   <!-- Floating Buttons -->
@@ -621,7 +734,100 @@
     const searchInput = document.getElementById('searchInput');
     const searchClear = document.getElementById('searchClear');
 
+    const filterModel = document.getElementById('filterModel');
+    const filterFirmware = document.getElementById('filterFirmware');
+    const btnManageDevices = document.getElementById('btnManageDevices');
+
+    const deviceMgmtModal = document.getElementById('deviceMgmtModal');
+    const deviceMgmtModalClose = document.getElementById('deviceMgmtModalClose');
+    const btnDeviceMgmtDone = document.getElementById('btnDeviceMgmtDone');
+    
+    const inputNewModelName = document.getElementById('inputNewModelName');
+    const btnAddModel = document.getElementById('btnAddModel');
+    
+    const selectMgmtModel = document.getElementById('selectMgmtModel');
+    const mgmtFirmwareSection = document.getElementById('mgmtFirmwareSection');
+    const inputNewFirmwareName = document.getElementById('inputNewFirmwareName');
+    const btnAddFirmware = document.getElementById('btnAddFirmware');
+    const mgmtFirmwareList = document.getElementById('mgmtFirmwareList');
+
     let allGallery = [];
+    let cachedModels = [];
+
+    // ===== Load Models (from Firestore) =====
+    async function loadModels() {
+      try {
+        cachedModels = await getAllModels();
+        
+        // Populate filter dropdowns
+        const selectedModel = filterModel.value;
+        const selectedFirmware = filterFirmware.value;
+
+        filterModel.innerHTML = '<option value="">Tümü (Tüm Modeller)</option>';
+        selectMgmtModel.innerHTML = '<option value="" disabled selected>Model seçin</option>';
+
+        cachedModels.forEach(m => {
+          const opt1 = document.createElement('option');
+          opt1.value = m.id;
+          opt1.textContent = m.id;
+          filterModel.appendChild(opt1);
+
+          const opt2 = document.createElement('option');
+          opt2.value = m.id;
+          opt2.textContent = m.id;
+          selectMgmtModel.appendChild(opt2);
+        });
+
+        if (selectedModel) {
+          filterModel.value = selectedModel;
+          updateFirmwareFilterSelect(selectedModel, selectedFirmware);
+        } else {
+          filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
+          filterFirmware.disabled = true;
+        }
+      } catch (err) {
+        console.error("Cihaz modelleri yüklenemedi:", err);
+      }
+    }
+
+    // Update Firmware filter select
+    function updateFirmwareFilterSelect(modelId, selectedFirmwareId = '') {
+      if (!modelId) {
+        filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
+        filterFirmware.disabled = true;
+        return;
+      }
+
+      const model = cachedModels.find(m => m.id === modelId);
+      if (!model || !model.firmwares || model.firmwares.length === 0) {
+        filterFirmware.innerHTML = '<option value="">Yazılım tanımlanmamış</option>';
+        filterFirmware.disabled = true;
+        return;
+      }
+
+      filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
+      model.firmwares.forEach(fw => {
+        const opt = document.createElement('option');
+        opt.value = fw;
+        opt.textContent = fw;
+        filterFirmware.appendChild(opt);
+      });
+      filterFirmware.disabled = false;
+
+      if (selectedFirmwareId && model.firmwares.includes(selectedFirmwareId)) {
+        filterFirmware.value = selectedFirmwareId;
+      }
+    }
+
+    // Change listeners for filters
+    filterModel.addEventListener('change', () => {
+      updateFirmwareFilterSelect(filterModel.value);
+      renderGallery();
+    });
+
+    filterFirmware.addEventListener('change', () => {
+      renderGallery();
+    });
 
     // ===== Load from Firestore =====
     async function loadGallery() {
@@ -633,6 +839,7 @@
       `;
 
       try {
+        await loadModels();
         allGallery = await getAllTestResults();
         renderGallery();
       } catch (e) {
@@ -649,15 +856,35 @@
 
     function renderGallery() {
       const query = searchInput.value.trim().toLowerCase();
-      const filtered = query
-        ? allGallery.filter(item => {
-            const haystack = [
-              item.model || '', item.firmware || '',
-              item.band || '', item.channel || ''
-            ].join(' ').toLowerCase();
-            return query.split(/\s+/).every(word => haystack.includes(word));
-          })
-        : allGallery;
+      
+      const selectedModel = filterModel.value;
+      const selectedFirmware = filterFirmware.value;
+
+      const filtered = allGallery.filter(item => {
+        // Text Search Match
+        let textMatch = true;
+        if (query) {
+          const haystack = [
+            item.model || '', item.firmware || '',
+            item.band || '', item.channel || ''
+          ].join(' ').toLowerCase();
+          textMatch = query.split(/\s+/).every(word => haystack.includes(word));
+        }
+
+        // Model Dropdown Match
+        let modelMatch = true;
+        if (selectedModel) {
+          modelMatch = (item.model === selectedModel);
+        }
+
+        // Firmware Dropdown Match
+        let firmwareMatch = true;
+        if (selectedFirmware) {
+          firmwareMatch = (item.firmware === selectedFirmware);
+        }
+
+        return textMatch && modelMatch && firmwareMatch;
+      });
 
       if (allGallery.length === 0) {
         galleryActions.style.display = 'none';
@@ -672,14 +899,14 @@
       }
 
       galleryActions.style.display = 'flex';
-      galleryCount.textContent = query
+      galleryCount.textContent = (query || selectedModel || selectedFirmware)
         ? `${filtered.length} / ${allGallery.length} sonuç`
         : `${allGallery.length} kayıt`;
 
       if (filtered.length === 0) {
         galleryContent.innerHTML = `
           <div class="gallery-grid">
-            <div class="gallery-no-results">🔍 "<strong>${escapeHtml(searchInput.value)}</strong>" ile eşleşen sonuç bulunamadı.</div>
+            <div class="gallery-no-results">🔍 Eşleşen sonuç bulunamadı. Filtreleri veya aramayı temizleyebilirsiniz.</div>
           </div>
         `;
         return;
@@ -696,8 +923,6 @@
         const title = titleParts.length > 0 ? titleParts.join(' — ') : 'İsimsiz Grafik';
 
         const date = item.createdAt ? formatDate(item.createdAt) : '—';
-
-        // Use base64 image from Firestore if available, otherwise fallback to Storage URL
         const imgSrc = item.image || item.imageUrl || '';
 
         html += `
@@ -745,6 +970,129 @@
       html += '</div>';
       galleryContent.innerHTML = html;
     }
+
+    // ===== Device Mgmt Modal Controls (inline) =====
+    btnManageDevices.addEventListener('click', () => {
+      deviceMgmtModal.style.display = 'flex';
+      inputNewModelName.value = '';
+      mgmtFirmwareSection.style.display = 'none';
+    });
+
+    async function closeDeviceMgmtModal() {
+      deviceMgmtModal.style.display = 'none';
+      await loadModels();
+      renderGallery();
+    }
+
+    deviceMgmtModalClose.addEventListener('click', closeDeviceMgmtModal);
+    btnDeviceMgmtDone.addEventListener('click', closeDeviceMgmtModal);
+    deviceMgmtModal.addEventListener('click', (e) => {
+      if (e.target === deviceMgmtModal) closeDeviceMgmtModal();
+    });
+
+    // Add new Model
+    btnAddModel.addEventListener('click', async () => {
+      const name = inputNewModelName.value.trim();
+      if (!name) {
+        alert("Lütfen model ismi girin.");
+        return;
+      }
+      btnAddModel.disabled = true;
+      try {
+        await addModel(name);
+        inputNewModelName.value = '';
+        await loadModels();
+        selectMgmtModel.value = name;
+        selectMgmtModel.dispatchEvent(new Event('change'));
+        showToast("✅ Model başarıyla eklendi.", "success");
+      } catch (err) {
+        alert(err.message || "Model eklenirken hata oluştu.");
+      } finally {
+        btnAddModel.disabled = false;
+      }
+    });
+
+    // When Model selection changes in management modal
+    selectMgmtModel.addEventListener('change', () => {
+      const modelId = selectMgmtModel.value;
+      const model = cachedModels.find(m => m.id === modelId);
+      if (model) {
+        mgmtFirmwareSection.style.display = 'block';
+        inputNewFirmwareName.value = '';
+        renderMgmtFirmwareList(model);
+      }
+    });
+
+    // Render firmware list in management modal with delete buttons
+    function renderMgmtFirmwareList(model) {
+      mgmtFirmwareList.innerHTML = '';
+      if (!model.firmwares || model.firmwares.length === 0) {
+        mgmtFirmwareList.innerHTML = '<li style="padding:10px 14px; font-size:0.8rem; color:var(--text-muted); text-align:center;">Henüz yazılım tanımlanmamış.</li>';
+        return;
+      }
+
+      model.firmwares.forEach(fw => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.padding = '8px 14px';
+        li.style.borderBottom = '1px solid var(--card-border)';
+        li.style.fontSize = '0.82rem';
+        li.style.color = 'var(--text-primary)';
+
+        const span = document.createElement('span');
+        span.textContent = fw;
+        
+        const btnDel = document.createElement('button');
+        btnDel.style.border = 'none';
+        btnDel.style.background = 'none';
+        btnDel.style.color = 'var(--error-text)';
+        btnDel.style.cursor = 'pointer';
+        btnDel.style.padding = '4px';
+        btnDel.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+        
+        btnDel.onclick = async () => {
+          if (!confirm(`"${fw}" yazılım sürümünü silmek istediğinize emin misiniz?`)) return;
+          try {
+            await deleteFirmwareFromModel(model.id, fw);
+            cachedModels = await getAllModels();
+            const updatedModel = cachedModels.find(m => m.id === model.id);
+            renderMgmtFirmwareList(updatedModel);
+            showToast("🗑️ Yazılım silindi.", "success");
+          } catch (err) {
+            alert("Yazılım silinirken hata oluştu.");
+          }
+        };
+
+        li.appendChild(span);
+        li.appendChild(btnDel);
+        mgmtFirmwareList.appendChild(li);
+      });
+    }
+
+    // Add new Firmware to selected Model
+    btnAddFirmware.addEventListener('click', async () => {
+      const modelId = selectMgmtModel.value;
+      const fwName = inputNewFirmwareName.value.trim();
+      if (!fwName) {
+        alert("Lütfen yazılım sürümü girin.");
+        return;
+      }
+      btnAddFirmware.disabled = true;
+      try {
+        await addFirmwareToModel(modelId, fwName);
+        inputNewFirmwareName.value = '';
+        cachedModels = await getAllModels();
+        const updatedModel = cachedModels.find(m => m.id === modelId);
+        renderMgmtFirmwareList(updatedModel);
+        showToast("✅ Yazılım sürümü başarıyla eklendi.", "success");
+      } catch (err) {
+        alert("Yazılım eklenirken hata oluştu.");
+      } finally {
+        btnAddFirmware.disabled = false;
+      }
+    });
 
     // ===== Search =====
     searchInput.addEventListener('input', () => {

@@ -139,3 +139,95 @@ async function changeUserPassword(currentPassword, newPassword) {
   // 2. Update password
   await user.updatePassword(newPassword);
 }
+
+const MODELS_COLLECTION = 'device_models';
+
+/**
+ * Gets all models and their firmware versions.
+ * If the collection is empty, populates it with some defaults.
+ * @returns {Promise<Array>} List of { id (name), firmwares: [] }
+ */
+async function getAllModels() {
+  const snapshot = await db.collection(MODELS_COLLECTION).get();
+  
+  if (snapshot.empty) {
+    // Populate default models
+    const defaults = [
+      { id: 'VX231', firmwares: ['250505', '250601'] },
+      { id: 'Archer AXE300', firmwares: ['1.1.2 Build 20240501'] },
+      { id: 'Archer BE800', firmwares: ['1.0.5 Build 20240415'] }
+    ];
+    
+    const batch = db.batch();
+    for (const d of defaults) {
+      const ref = db.collection(MODELS_COLLECTION).doc(d.id);
+      batch.set(ref, {
+        firmwares: d.firmwares,
+        createdAt: new Date().toISOString()
+      });
+    }
+    await batch.commit();
+    
+    return defaults;
+  }
+  
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    firmwares: doc.data().firmwares || []
+  }));
+}
+
+/**
+ * Add a new model to Firestore
+ * @param {string} modelName 
+ */
+async function addModel(modelName) {
+  const cleanedName = modelName.trim();
+  if (!cleanedName) throw new Error("Model ismi boş olamaz.");
+  
+  const ref = db.collection(MODELS_COLLECTION).doc(cleanedName);
+  const doc = await ref.get();
+  if (doc.exists) {
+    throw new Error("Bu model zaten tanımlı.");
+  }
+  
+  await ref.set({
+    firmwares: [],
+    createdAt: new Date().toISOString()
+  });
+}
+
+/**
+ * Delete a model from Firestore
+ * @param {string} modelName 
+ */
+async function deleteModel(modelName) {
+  await db.collection(MODELS_COLLECTION).doc(modelName).delete();
+}
+
+/**
+ * Add a firmware version to a specific model
+ * @param {string} modelName 
+ * @param {string} firmware 
+ */
+async function addFirmwareToModel(modelName, firmware) {
+  const cleanedFirmware = firmware.trim();
+  if (!cleanedFirmware) throw new Error("Yazılım sürümü boş olamaz.");
+  
+  const ref = db.collection(MODELS_COLLECTION).doc(modelName);
+  await ref.update({
+    firmwares: firebase.firestore.FieldValue.arrayUnion(cleanedFirmware)
+  });
+}
+
+/**
+ * Delete a firmware version from a specific model
+ * @param {string} modelName 
+ * @param {string} firmware 
+ */
+async function deleteFirmwareFromModel(modelName, firmware) {
+  const ref = db.collection(MODELS_COLLECTION).doc(modelName);
+  await ref.update({
+    firmwares: firebase.firestore.FieldValue.arrayRemove(firmware)
+  });
+}

@@ -347,7 +347,7 @@
   function openModal() {
     saveModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    inputModel.focus();
+    loadModelsIntoSelects();
   }
 
   function closeModal() {
@@ -357,8 +357,11 @@
 
   // ===== Build Chart Image (shared by save & download) =====
   function buildChartImage() {
-    const model = inputModel.value.trim() || '—';
-    const firmware = inputFirmware.value.trim() || '—';
+    const selectModel = document.getElementById('selectModel');
+    const selectFirmware = document.getElementById('selectFirmware');
+    
+    const model = selectModel.value || '—';
+    const firmware = selectFirmware.value || '—';
     const band = selectBand.value || '—';
     const channelOpt = selectChannel.options[selectChannel.selectedIndex];
     const channel = (channelOpt && channelOpt.value) ? channelOpt.text : '—';
@@ -808,4 +811,210 @@
       toastTimer = null;
     }, 2500);
   }
+
+  // ===== Device Model & Firmware Management Logic =====
+  let cachedModels = [];
+
+  const selectModel = document.getElementById('selectModel');
+  const selectFirmware = document.getElementById('selectFirmware');
+  const btnManageDevices = document.getElementById('btnManageDevices');
+  
+  const deviceMgmtModal = document.getElementById('deviceMgmtModal');
+  const deviceMgmtModalClose = document.getElementById('deviceMgmtModalClose');
+  const btnDeviceMgmtDone = document.getElementById('btnDeviceMgmtDone');
+  
+  const inputNewModelName = document.getElementById('inputNewModelName');
+  const btnAddModel = document.getElementById('btnAddModel');
+  
+  const selectMgmtModel = document.getElementById('selectMgmtModel');
+  const mgmtFirmwareSection = document.getElementById('mgmtFirmwareSection');
+  const inputNewFirmwareName = document.getElementById('inputNewFirmwareName');
+  const btnAddFirmware = document.getElementById('btnAddFirmware');
+  const mgmtFirmwareList = document.getElementById('mgmtFirmwareList');
+
+  // Load models from Firestore and populate dropdowns
+  async function loadModelsIntoSelects(selectedModelId = '', selectedFirmwareId = '') {
+    try {
+      cachedModels = await getAllModels();
+      
+      // Populate selectModel (Save Modal)
+      selectModel.innerHTML = '<option value="" disabled selected>Model seçin</option>';
+      selectMgmtModel.innerHTML = '<option value="" disabled selected>Model seçin</option>';
+      
+      cachedModels.forEach(m => {
+        const opt1 = document.createElement('option');
+        opt1.value = m.id;
+        opt1.textContent = m.id;
+        selectModel.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = m.id;
+        opt2.textContent = m.id;
+        selectMgmtModel.appendChild(opt2);
+      });
+
+      if (selectedModelId) {
+        selectModel.value = selectedModelId;
+        updateFirmwareSelect(selectedModelId, selectedFirmwareId);
+      } else {
+        selectFirmware.innerHTML = '<option value="" disabled selected>Önce model seçin</option>';
+        selectFirmware.disabled = true;
+      }
+    } catch (err) {
+      console.error("Modeller yüklenirken hata:", err);
+      showToast("❌ Cihaz modelleri yüklenemedi.");
+    }
+  }
+
+  // When Model selection changes in Save Modal
+  selectModel.addEventListener('change', () => {
+    updateFirmwareSelect(selectModel.value);
+  });
+
+  function updateFirmwareSelect(modelId, selectedFirmwareId = '') {
+    const model = cachedModels.find(m => m.id === modelId);
+    if (!model || !model.firmwares || model.firmwares.length === 0) {
+      selectFirmware.innerHTML = '<option value="" disabled selected>Yazılım sürümü tanımlanmamış</option>';
+      selectFirmware.disabled = true;
+      return;
+    }
+
+    selectFirmware.innerHTML = '<option value="" disabled selected>Yazılım seçin</option>';
+    model.firmwares.forEach(fw => {
+      const opt = document.createElement('option');
+      opt.value = fw;
+      opt.textContent = fw;
+      selectFirmware.appendChild(opt);
+    });
+    selectFirmware.disabled = false;
+
+    if (selectedFirmwareId && model.firmwares.includes(selectedFirmwareId)) {
+      selectFirmware.value = selectedFirmwareId;
+    }
+  }
+
+  // Open/Close Device Management Modal
+  btnManageDevices.addEventListener('click', () => {
+    deviceMgmtModal.style.display = 'flex';
+    inputNewModelName.value = '';
+    mgmtFirmwareSection.style.display = 'none';
+  });
+
+  function closeDeviceMgmtModal() {
+    deviceMgmtModal.style.display = 'none';
+    // Refresh dropdowns in Save Modal to reflect additions/removals
+    loadModelsIntoSelects(selectModel.value, selectFirmware.value);
+  }
+
+  deviceMgmtModalClose.addEventListener('click', closeDeviceMgmtModal);
+  btnDeviceMgmtDone.addEventListener('click', closeDeviceMgmtModal);
+  deviceMgmtModal.addEventListener('click', (e) => {
+    if (e.target === deviceMgmtModal) closeDeviceMgmtModal();
+  });
+
+  // Add new Model
+  btnAddModel.addEventListener('click', async () => {
+    const name = inputNewModelName.value.trim();
+    if (!name) {
+      alert("Lütfen model ismi girin.");
+      return;
+    }
+    btnAddModel.disabled = true;
+    try {
+      await addModel(name);
+      inputNewModelName.value = '';
+      await loadModelsIntoSelects();
+      // Select the newly added model in management dropdown
+      selectMgmtModel.value = name;
+      selectMgmtModel.dispatchEvent(new Event('change'));
+      showToast("✅ Model başarıyla eklendi.");
+    } catch (err) {
+      alert(err.message || "Model eklenirken hata oluştu.");
+    } finally {
+      btnAddModel.disabled = false;
+    }
+  });
+
+  // When Model selection changes in management modal
+  selectMgmtModel.addEventListener('change', () => {
+    const modelId = selectMgmtModel.value;
+    const model = cachedModels.find(m => m.id === modelId);
+    if (model) {
+      mgmtFirmwareSection.style.display = 'block';
+      inputNewFirmwareName.value = '';
+      renderMgmtFirmwareList(model);
+    }
+  });
+
+  // Render firmware list in management modal with delete buttons
+  function renderMgmtFirmwareList(model) {
+    mgmtFirmwareList.innerHTML = '';
+    if (!model.firmwares || model.firmwares.length === 0) {
+      mgmtFirmwareList.innerHTML = '<li style="padding:10px 14px; font-size:0.8rem; color:var(--text-muted); text-align:center;">Henüz yazılım tanımlanmamış.</li>';
+      return;
+    }
+
+    model.firmwares.forEach(fw => {
+      const li = document.createElement('li');
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      li.style.alignItems = 'center';
+      li.style.padding = '8px 14px';
+      li.style.borderBottom = '1px solid var(--card-border)';
+      li.style.fontSize = '0.82rem';
+      li.style.color = 'var(--text-primary)';
+
+      const span = document.createElement('span');
+      span.textContent = fw;
+      
+      const btnDel = document.createElement('button');
+      btnDel.style.border = 'none';
+      btnDel.style.background = 'none';
+      btnDel.style.color = 'var(--error-text)';
+      btnDel.style.cursor = 'pointer';
+      btnDel.style.padding = '4px';
+      btnDel.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+      
+      btnDel.onclick = async () => {
+        if (!confirm(`"${fw}" yazılım sürümünü silmek istediğinize emin misiniz?`)) return;
+        try {
+          await deleteFirmwareFromModel(model.id, fw);
+          // Refresh data
+          cachedModels = await getAllModels();
+          const updatedModel = cachedModels.find(m => m.id === model.id);
+          renderMgmtFirmwareList(updatedModel);
+          showToast("🗑️ Yazılım silindi.");
+        } catch (err) {
+          alert("Yazılım silinirken hata oluştu.");
+        }
+      };
+
+      li.appendChild(span);
+      li.appendChild(btnDel);
+      mgmtFirmwareList.appendChild(li);
+    });
+  }
+
+  // Add new Firmware to selected Model
+  btnAddFirmware.addEventListener('click', async () => {
+    const modelId = selectMgmtModel.value;
+    const fwName = inputNewFirmwareName.value.trim();
+    if (!fwName) {
+      alert("Lütfen yazılım sürümü girin.");
+      return;
+    }
+    btnAddFirmware.disabled = true;
+    try {
+      await addFirmwareToModel(modelId, fwName);
+      inputNewFirmwareName.value = '';
+      cachedModels = await getAllModels();
+      const updatedModel = cachedModels.find(m => m.id === modelId);
+      renderMgmtFirmwareList(updatedModel);
+      showToast("✅ Yazılım sürümü başarıyla eklendi.");
+    } catch (err) {
+      alert("Yazılım eklenirken hata oluştu.");
+    } finally {
+      btnAddFirmware.disabled = false;
+    }
+  });
 })();
