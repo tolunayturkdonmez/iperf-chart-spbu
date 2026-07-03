@@ -372,35 +372,44 @@ body {
 }
 
 .stat-card {
-  padding: 20px;
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  border-radius: 20px !important;
+  padding: 24px 20px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01) !important;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  transition: transform var(--transition-bounce);
+  align-items: center;
+  justify-content: center;
+  gap: 8px !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease !important;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05) !important;
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .stat-value {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--accent-dark);
+  font-size: 2.2rem !important;
+  font-weight: 800 !important;
+  color: #0ea5e9 !important; /* Beautiful cyan value */
+  line-height: 1.1;
 }
 
 .stat-unit {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #64748b !important;
 }
 
 /* ===== Chart Section ===== */
