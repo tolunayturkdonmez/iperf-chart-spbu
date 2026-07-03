@@ -273,68 +273,53 @@
       position: fixed;
       inset: 0;
       z-index: 2000;
-      background: rgba(15, 23, 42, 0.96);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      animation: modalFadeIn 0.25s ease;
+      animation: modalFadeIn 0.2s ease;
     }
-    .lightbox-wrapper {
-      position: relative;
+    .lightbox-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      max-width: 95%;
-      max-height: 95vh;
       gap: 16px;
+      max-width: 90%;
+      max-height: 90vh;
+      animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .lightbox-wrapper img {
+    .lightbox-container img {
       max-width: 100%;
-      max-height: 80vh;
-      border-radius: 12px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-height: 75vh;
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
       display: block;
     }
-    .lightbox-toolbar {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      width: 100%;
-    }
-    .btn-lightbox-action {
+    .btn-lightbox-download {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 10px 24px;
-      border-radius: 100px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), background var(--transition-fast);
-      border: none;
-    }
-    .btn-lightbox-download {
       background: var(--accent-gradient);
       color: white;
-      box-shadow: 0 4px 14px rgba(79, 193, 233, 0.35);
+      border: none;
+      border-radius: 100px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(79, 193, 233, 0.3);
+      transition: transform var(--transition-bounce), box-shadow var(--transition-smooth);
     }
     .btn-lightbox-download:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(79, 193, 233, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(79, 193, 233, 0.45);
     }
-    .btn-lightbox-close {
-      background: rgba(255, 255, 255, 0.1);
-      color: #f1f5f9;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .btn-lightbox-close:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: translateY(-2px);
+    .btn-lightbox-download:active {
+      transform: translateY(0);
     }
 
     /* No Results */
@@ -581,7 +566,7 @@
               <h3 title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
               <div class="gallery-date">${date}</div>
             </div>
-            <img src="${imgSrc}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src, '${item.id}')" loading="lazy">
+            <img src="${imgSrc}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src, '${escapeHtml(item.fileName || 'iperf_throughput')}')" loading="lazy">
             <div class="gallery-item-meta">
               <div class="gallery-meta-cell">
                 <div class="gallery-meta-label">Model</div>
@@ -704,49 +689,40 @@
     };
 
     // ===== Lightbox =====
-    window.openLightbox = function(src, docId) {
+    window.openLightbox = function(src, fileName) {
       const overlay = document.createElement('div');
       overlay.className = 'lightbox-overlay';
+      
+      // Close overlay only when clicking the background overlay
       overlay.onclick = (e) => {
-        if (e.target === overlay) overlay.remove();
+        if (e.target === overlay) {
+          overlay.remove();
+        }
       };
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'lightbox-wrapper';
+      const container = document.createElement('div');
+      container.className = 'lightbox-container';
 
       const img = document.createElement('img');
       img.src = src;
+      img.alt = fileName || 'Test Sonucu Görseli';
+      container.appendChild(img);
 
-      const toolbar = document.createElement('div');
-      toolbar.className = 'lightbox-toolbar';
-
-      // Download Button
+      // Download button inside lightbox
       const btnDownload = document.createElement('button');
-      btnDownload.className = 'btn-lightbox-action btn-lightbox-download';
-      btnDownload.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.25 9.33v2.34a1.17 1.17 0 01-1.17 1.16H2.92a1.17 1.17 0 01-1.17-1.16V9.33M7 2.33v7M4.08 6.42L7 9.33l2.92-2.91" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Görseli İndir
-      `;
-      btnDownload.onclick = () => {
-        if (docId) downloadItem(docId);
+      btnDownload.className = 'btn-lightbox-download';
+      btnDownload.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Görseli İndir`;
+      
+      btnDownload.onclick = (e) => {
+        e.stopPropagation();
+        const link = document.createElement('a');
+        link.download = `${fileName || 'iperf_throughput'}.png`;
+        link.href = src;
+        link.click();
       };
 
-      // Close Button
-      const btnClose = document.createElement('button');
-      btnClose.className = 'btn-lightbox-action btn-lightbox-close';
-      btnClose.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Kapat
-      `;
-      btnClose.onclick = () => overlay.remove();
-
-      toolbar.appendChild(btnDownload);
-      toolbar.appendChild(btnClose);
-
-      wrapper.appendChild(img);
-      wrapper.appendChild(toolbar);
-      overlay.appendChild(wrapper);
-
+      container.appendChild(btnDownload);
+      overlay.appendChild(container);
       document.body.appendChild(overlay);
 
       document.addEventListener('keydown', function handler(e) {
