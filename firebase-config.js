@@ -149,26 +149,63 @@ const MODELS_COLLECTION = 'device_models';
  */
 async function getAllModels() {
   const snapshot = await db.collection(MODELS_COLLECTION).get();
+  const existingModels = new Set(snapshot.docs.map(doc => doc.id));
   
-  if (snapshot.empty) {
-    // Populate default models
-    const defaults = [
-      { id: 'VX231', firmwares: ['250505', '250601'] },
-      { id: 'Archer AXE300', firmwares: ['1.1.2 Build 20240501'] },
-      { id: 'Archer BE800', firmwares: ['1.0.5 Build 20240415'] }
-    ];
-    
+  const defaults = [
+    "Archer C5v",
+    "EB230v",
+    "EB810v Generic",
+    "EB810v TRTC",
+    "EB810v TRTT",
+    "EC220-F5",
+    "EC220-G5",
+    "EX141",
+    "EX141 (TR)",
+    "EX20v",
+    "EX520v",
+    "EX530v TRTC",
+    "HB210 Pro",
+    "HC220-G5",
+    "HX220",
+    "HX520",
+    "NB450",
+    "NX540 (TRTT)",
+    "VC220-G2u",
+    "VC220-G3u (TRMLC)",
+    "VC220-G3u (TRTS)",
+    "VC220-G3u (TRTT)",
+    "VX220-G2u",
+    "VX231",
+    "XC220-G3",
+    "XC220-G3v",
+    "XN020-G3",
+    "XX230v",
+    "XX530",
+    "XX530 v2",
+    "XX530 v2 (TR)",
+    "XX530v",
+    "XX535"
+  ];
+  
+  const missingDefaults = defaults.filter(d => !existingModels.has(d));
+  
+  if (missingDefaults.length > 0) {
     const batch = db.batch();
-    for (const d of defaults) {
-      const ref = db.collection(MODELS_COLLECTION).doc(d.id);
+    for (const m of missingDefaults) {
+      const ref = db.collection(MODELS_COLLECTION).doc(m);
       batch.set(ref, {
-        firmwares: d.firmwares,
+        firmwares: m === 'VX231' ? ['250505', '250601'] : [],
         createdAt: new Date().toISOString()
       });
     }
     await batch.commit();
     
-    return defaults;
+    // Fetch updated list from Firestore
+    const updatedSnapshot = await db.collection(MODELS_COLLECTION).get();
+    return updatedSnapshot.docs.map(doc => ({
+      id: doc.id,
+      firmwares: doc.data().firmwares || []
+    }));
   }
   
   return snapshot.docs.map(doc => ({

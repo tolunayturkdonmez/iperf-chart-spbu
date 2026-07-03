@@ -836,6 +836,8 @@
   async function loadModelsIntoSelects(selectedModelId = '', selectedFirmwareId = '') {
     try {
       cachedModels = await getAllModels();
+      // Sort models alphabetically (Turkish locale compatible)
+      cachedModels.sort((a, b) => a.id.localeCompare(b.id, 'tr'));
       
       // Populate selectModel (Save Modal)
       selectModel.innerHTML = '<option value="" disabled selected>Model seçin</option>';
