@@ -179,6 +179,8 @@
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('error') === 'unauthorized') {
         showAlert('Yanlış kullanıcı adı veya şifre', 'danger');
+      } else if (urlParams.get('error') === 'timeout') {
+        showAlert('5 dakika boyunca işlem yapmadığınız için oturumunuz otomatik olarak sonlandırıldı.', 'danger');
       } else if (urlParams.get('redirected') === 'true') {
         showAlert('Lütfen devam etmek için oturum açın.', 'danger');
       }

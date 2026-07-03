@@ -24,7 +24,6 @@
   const modalClose = document.getElementById('modalClose');
   const modalCancel = document.getElementById('modalCancel');
   const modalSaveOnly = document.getElementById('modalSaveOnly');
-  const modalDownload = document.getElementById('modalDownload');
   const inputModel = document.getElementById('inputModel');
   const inputFirmware = document.getElementById('inputFirmware');
   const selectBand = document.getElementById('selectBand');
@@ -343,16 +342,6 @@
       modalSaveOnly.disabled = false;
       modalSaveOnly.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 5.5V13a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 13V3a1.5 1.5 0 011.5-1.5H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 1.5l3 3M7.5 9l6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Sonucu Kaydet';
     }
-  });
-
-  modalDownload.addEventListener('click', () => {
-    const { canvasDataUrl, entry, finalFileName } = buildChartImage();
-    const link = document.createElement('a');
-    link.download = `${finalFileName}_${getTimestamp()}.png`;
-    link.href = canvasDataUrl;
-    link.click();
-    showToast('✅ Test Sonucu Görsel Olarak İndirildi');
-    closeModal();
   });
 
   function openModal() {

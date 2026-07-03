@@ -23,6 +23,31 @@ function isTPLinkEmail(email) {
   return /@tp-link\.[a-zA-Z0-9.-]+$/i.test(email);
 }
 
+// ===== Session Timeout (Inactivity Tracker for 5 mins) =====
+let inactivityTimeout = null;
+
+function resetInactivityTimer() {
+  if (inactivityTimeout) clearTimeout(inactivityTimeout);
+  inactivityTimeout = setTimeout(logoutDueToInactivity, 5 * 60 * 1000); // 5 minutes
+}
+
+function logoutDueToInactivity() {
+  if (auth.currentUser) {
+    auth.signOut().then(() => {
+      window.location.href = 'login.html?error=timeout';
+    });
+  }
+}
+
+// Only track activity if not on login page
+if (!window.location.pathname.endsWith('login.html')) {
+  const activityEvents = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll', 'click'];
+  activityEvents.forEach(evt => {
+    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+  });
+  resetInactivityTimer();
+}
+
 // Collection name
 const COLLECTION_NAME = 'testResults';
 
@@ -34,6 +59,8 @@ const COLLECTION_NAME = 'testResults';
  * @returns {Promise<string>} Document ID
  */
 async function saveTestResult(entry) {
+  const currentUserEmail = auth.currentUser ? auth.currentUser.email : '—';
+  
   const docData = {
     model: entry.model || '—',
     firmware: entry.firmware || '—',
@@ -45,6 +72,7 @@ async function saveTestResult(entry) {
     duration: entry.duration || '—',
     fileName: entry.fileName || 'iperf_throughput',
     image: entry.image,  // base64 PNG stored directly
+    savedBy: currentUserEmail, // Track who saved it
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     createdAt: new Date().toISOString()
   };

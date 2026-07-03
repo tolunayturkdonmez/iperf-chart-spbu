@@ -616,58 +616,24 @@ body {
   background: linear-gradient(135deg, #059669, #10b981);
 }
 
-/* ===== Split Modal Actions ===== */
-.modal-actions-split {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-actions-right {
-  display: flex;
-  gap: 10px;
-}
-
 .btn-modal-save-only {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 11px 20px;
-  border: 2px solid var(--accent-primary);
-  border-radius: var(--radius-sm);
-  background: white;
-  color: var(--accent-dark);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--transition-fast), transform var(--transition-bounce);
-}
-
-.btn-modal-save-only:hover {
-  background: var(--accent-light);
-  transform: translateY(-1px);
-}
-
-.btn-modal-download {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 11px 20px;
+  padding: 11px 24px;
   border: none;
   border-radius: var(--radius-sm);
   background: var(--accent-gradient);
   color: white;
   font-family: 'Inter', sans-serif;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform var(--transition-bounce), box-shadow var(--transition-smooth);
   box-shadow: 0 3px 12px rgba(79, 193, 233, 0.3);
 }
 
-.btn-modal-download:hover {
+.btn-modal-save-only:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(79, 193, 233, 0.4);
 }
