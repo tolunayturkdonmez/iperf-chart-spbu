@@ -196,10 +196,6 @@
 
   <!-- Floating Gallery Button & Logout Button -->
   <div class="fab-container">
-    <button class="fab-password" id="btnChangePassword" title="Şifre Değiştir">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-      <span>Şifre Değiştir</span>
-    </button>
     <a href="gallery.html" class="fab-gallery" id="fabGallery" title="Kayıtlı Test Sonuçları">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M2 13l4-4 3 3 4-5 5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7.5" r="1.5" fill="currentColor"/></svg>
       <span>Kayıtlı Test Sonuçları</span>
@@ -210,8 +206,8 @@
     </button>
   </div>
 
-  <!-- Change Password Modal Overlay -->
-  <div class="modal-overlay" id="passwordModal" style="display:none;">
+  <!-- Change Password Modal Overlay (White-toned) -->
+  <div class="password-modal-overlay" id="passwordModal" style="display:none;">
     <div class="modal card">
       <div class="modal-header">
         <h3>🔒 Şifre Değiştir</h3>
@@ -250,6 +246,12 @@
       </div>
     </div>
   </div>
+
+  <!-- Minimal Password Change Button -->
+  <button class="fab-password" id="btnChangePassword" title="Şifre Değiştir">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    <span>Şifre Değiştir</span>
+  </button>
 
   <!-- Subtle Logged In User Text (Bottom Right) -->
   <span class="user-status-text" id="userStatusText"></span>

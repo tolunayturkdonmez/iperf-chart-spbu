@@ -1000,41 +1000,68 @@ body {
   }
 }
 
-/* ===== Floating Password Change Button ===== */
+/* ===== Minimal Password Change Link (Bottom Right, above user status text) ===== */
 .fab-password {
+  position: fixed !important;
+  bottom: 34px !important;
+  right: 20px !important;
+  z-index: 890;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 22px;
-  background: white;
-  border: 1px solid var(--accent-primary);
-  border-radius: 100px;
-  color: var(--accent-dark);
+  gap: 4px;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  color: var(--accent-dark) !important;
   font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
-  transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), background var(--transition-fast);
+  transition: color var(--transition-fast) !important;
 }
 
 .fab-password:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(79, 193, 233, 0.15);
-  background: var(--accent-light);
+  color: var(--text-primary) !important;
+  transform: none !important;
 }
 
 .fab-password svg {
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
 }
 
+/* ===== White Toned Password Modal Overlay ===== */
+.password-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.94); /* solid white tone, high opacity */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: modalFadeIn 0.25s ease;
+}
+
+.password-modal-overlay .modal {
+  background: #ffffff;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+}
+
 @media (max-width: 768px) {
-  .fab-password span {
-    display: none;
-  }
   .fab-password {
-    padding: 12px;
-    border-radius: 50%;
+    position: static !important;
+    display: block;
+    text-align: center;
+    margin: 12px auto 0 !important;
+    width: fit-content;
   }
 }
 
