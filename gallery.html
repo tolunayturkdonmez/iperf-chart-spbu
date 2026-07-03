@@ -273,19 +273,68 @@
       position: fixed;
       inset: 0;
       z-index: 2000;
-      background: rgba(0,0,0,0.85);
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      cursor: zoom-out;
-      animation: modalFadeIn 0.2s ease;
+      animation: modalFadeIn 0.25s ease;
     }
-    .lightbox-overlay img {
+    .lightbox-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       max-width: 95%;
       max-height: 95vh;
-      border-radius: 8px;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+      gap: 16px;
+    }
+    .lightbox-wrapper img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: block;
+    }
+    .lightbox-toolbar {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      width: 100%;
+    }
+    .btn-lightbox-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: 100px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), background var(--transition-fast);
+      border: none;
+    }
+    .btn-lightbox-download {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 4px 14px rgba(79, 193, 233, 0.35);
+    }
+    .btn-lightbox-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 193, 233, 0.5);
+    }
+    .btn-lightbox-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
     }
 
     /* No Results */
@@ -532,7 +581,7 @@
               <h3 title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
               <div class="gallery-date">${date}</div>
             </div>
-            <img src="${imgSrc}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src)" loading="lazy">
+            <img src="${imgSrc}" alt="${escapeHtml(title)}" class="gallery-item-image" onclick="openLightbox(this.src, '${item.id}')" loading="lazy">
             <div class="gallery-item-meta">
               <div class="gallery-meta-cell">
                 <div class="gallery-meta-label">Model</div>
@@ -655,14 +704,51 @@
     };
 
     // ===== Lightbox =====
-    window.openLightbox = function(src) {
+    window.openLightbox = function(src, docId) {
       const overlay = document.createElement('div');
       overlay.className = 'lightbox-overlay';
-      overlay.onclick = () => overlay.remove();
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'lightbox-wrapper';
+
       const img = document.createElement('img');
       img.src = src;
-      overlay.appendChild(img);
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'lightbox-toolbar';
+
+      // Download Button
+      const btnDownload = document.createElement('button');
+      btnDownload.className = 'btn-lightbox-action btn-lightbox-download';
+      btnDownload.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.25 9.33v2.34a1.17 1.17 0 01-1.17 1.16H2.92a1.17 1.17 0 01-1.17-1.16V9.33M7 2.33v7M4.08 6.42L7 9.33l2.92-2.91" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Görseli İndir
+      `;
+      btnDownload.onclick = () => {
+        if (docId) downloadItem(docId);
+      };
+
+      // Close Button
+      const btnClose = document.createElement('button');
+      btnClose.className = 'btn-lightbox-action btn-lightbox-close';
+      btnClose.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Kapat
+      `;
+      btnClose.onclick = () => overlay.remove();
+
+      toolbar.appendChild(btnDownload);
+      toolbar.appendChild(btnClose);
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(toolbar);
+      overlay.appendChild(wrapper);
+
       document.body.appendChild(overlay);
+
       document.addEventListener('keydown', function handler(e) {
         if (e.key === 'Escape') {
           overlay.remove();
