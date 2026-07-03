@@ -121,3 +121,21 @@ async function deleteAllTestResults() {
     await batch.commit();
   }
 }
+
+/**
+ * Re-authenticates the current user with their current password and updates it to the new password.
+ * @param {string} currentPassword 
+ * @param {string} newPassword 
+ */
+async function changeUserPassword(currentPassword, newPassword) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Oturum açmış kullanıcı bulunamadı.");
+  
+  const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+  
+  // 1. Re-authenticate
+  await user.reauthenticateWithCredential(credential);
+  
+  // 2. Update password
+  await user.updatePassword(newPassword);
+}

@@ -505,6 +505,12 @@
   }
 
   function filterPerSecondData(data) {
+    // If the data has 1-second or sub-second intervals (<= 1.25s), only keep those to get 1-second granularity
+    const hasOneSecondData = data.some(d => (d.endTime - d.startTime) <= 1.25);
+    if (hasOneSecondData) {
+      return data.filter(d => (d.endTime - d.startTime) <= 1.25);
+    }
+    // Fallback: keep whatever interval size is present (e.g., 3-second intervals if parsed directly)
     return data.filter(d => (d.endTime - d.startTime) <= 10);
   }
 

@@ -997,7 +997,44 @@ body {
     display: block;
     text-align: center;
     margin-top: 10px;
-    padding-bottom: 12px;
+  }
+}
+
+/* ===== Floating Password Change Button ===== */
+.fab-password {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: white;
+  border: 1px solid var(--accent-primary);
+  border-radius: 100px;
+  color: var(--accent-dark);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), background var(--transition-fast);
+}
+
+.fab-password:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(79, 193, 233, 0.15);
+  background: var(--accent-light);
+}
+
+.fab-password svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .fab-password span {
+    display: none;
+  }
+  .fab-password {
+    padding: 12px;
+    border-radius: 50%;
   }
 }
 
