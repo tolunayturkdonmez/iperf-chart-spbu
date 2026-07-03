@@ -341,6 +341,56 @@
       transform: scale(0.98);
     }
 
+    /* Searchable Select (Dropdown Combobox) */
+    .searchable-select {
+      position: relative;
+      width: 100%;
+    }
+    .searchable-select-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1005;
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 4px;
+      animation: modalFadeIn 0.15s ease;
+    }
+    .searchable-select-options {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .searchable-select-options li {
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast);
+      text-align: left;
+    }
+    .searchable-select-options li:hover {
+      background: var(--bg-secondary);
+    }
+    .searchable-select-options li.selected {
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+    .searchable-select-options li.no-results {
+      color: var(--text-muted);
+      text-align: center;
+      cursor: default;
+      background: transparent !important;
+      font-size: 0.8rem;
+      padding: 12px;
+    }
+
     /* Lightbox */
     .lightbox-overlay {
       position: fixed;
@@ -466,22 +516,28 @@
       </button>
     </div>
 
-    <!-- Dropdown Filters (Model & Yazılım & Band Listbox) -->
+    <!-- Dropdown Filters (Model & Yazılım & Band Listbox - Searchable) -->
     <div class="gallery-filters">
       <div class="filter-group">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label for="filterModel">Cihaz Modeli</label>
+          <label>Cihaz Modeli</label>
           <button class="btn-text-link" id="btnManageDevices" style="font-size:0.75rem; border:none; background:none; color:var(--accent-dark); cursor:pointer; text-decoration:underline; font-weight:600; padding:0;">[Yönet]</button>
         </div>
-        <select id="filterModel" class="filter-select">
-          <option value="" selected>Tümü (Tüm Modeller)</option>
-        </select>
+        <div class="searchable-select" id="selectModelContainer">
+          <input type="text" id="filterModel" class="filter-select" placeholder="Tümü (Tüm Modeller)" autocomplete="off">
+          <div class="searchable-select-dropdown" style="display:none;">
+            <ul class="searchable-select-options"></ul>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
-        <label for="filterFirmware">Yazılım Sürümü</label>
-        <select id="filterFirmware" class="filter-select" disabled>
-          <option value="" selected>Tümü (Tüm Yazılımlar)</option>
-        </select>
+        <label>Yazılım Sürümü</label>
+        <div class="searchable-select" id="selectFirmwareContainer">
+          <input type="text" id="filterFirmware" class="filter-select" placeholder="Tümü (Tüm Yazılımlar)" autocomplete="off" disabled>
+          <div class="searchable-select-dropdown" style="display:none;">
+            <ul class="searchable-select-options"></ul>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
         <label for="filterBand">Band</label>
@@ -798,6 +854,129 @@
     let allGallery = [];
     let cachedModels = [];
 
+    // ===== Searchable Select (Dropdown Combobox) Class =====
+    class SearchableSelect {
+      constructor(containerId, placeholder, onSelect) {
+        this.container = document.getElementById(containerId);
+        this.input = this.container.querySelector('.filter-select');
+        this.dropdown = this.container.querySelector('.searchable-select-dropdown');
+        this.optionsList = this.container.querySelector('.searchable-select-options');
+        this.placeholder = placeholder;
+        this.onSelect = onSelect;
+        
+        this.options = []; // Array of { value, text }
+        this.selectedValue = '';
+        this.disabled = false;
+
+        this.initEvents();
+      }
+
+      setOptions(options) {
+        this.options = options;
+        this.renderOptions();
+      }
+
+      renderOptions(filterText = '') {
+        this.optionsList.innerHTML = '';
+        
+        const query = filterText.toLowerCase().trim();
+        const filtered = this.options.filter(opt => 
+          opt.text.toLowerCase().includes(query) || opt.value === ''
+        );
+
+        if (filtered.length === 0) {
+          const li = document.createElement('li');
+          li.className = 'no-results';
+          li.textContent = 'Sonuç bulunamadı';
+          this.optionsList.appendChild(li);
+          return;
+        }
+
+        filtered.forEach(opt => {
+          const li = document.createElement('li');
+          li.textContent = opt.text;
+          li.dataset.value = opt.value;
+          if (opt.value === this.selectedValue) {
+            li.className = 'selected';
+          }
+          
+          li.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevent input blur from hiding dropdown too early
+            this.selectOption(opt.value, opt.text);
+          });
+          
+          this.optionsList.appendChild(li);
+        });
+      }
+
+      selectOption(value, text) {
+        this.selectedValue = value;
+        this.input.value = value ? text : '';
+        this.input.placeholder = this.placeholder;
+        this.dropdown.style.display = 'none';
+        this.renderOptions();
+        if (this.onSelect) this.onSelect(value);
+      }
+
+      setValue(value) {
+        this.selectedValue = value;
+        const opt = this.options.find(o => o.value === value);
+        this.input.value = opt ? (opt.value ? opt.text : '') : '';
+        this.renderOptions();
+      }
+
+      setDisabled(disabled) {
+        this.disabled = disabled;
+        this.input.disabled = disabled;
+        if (disabled) {
+          this.input.style.background = '#f1f5f9';
+          this.input.style.cursor = 'not-allowed';
+          this.input.placeholder = 'Pasif';
+          this.selectedValue = '';
+          this.input.value = '';
+        } else {
+          this.input.style.background = '';
+          this.input.style.cursor = '';
+          this.input.placeholder = this.placeholder;
+        }
+      }
+
+      initEvents() {
+        this.input.addEventListener('focus', () => {
+          if (this.disabled) return;
+          this.dropdown.style.display = 'block';
+          this.renderOptions(this.input.value);
+        });
+
+        this.input.addEventListener('blur', () => {
+          this.dropdown.style.display = 'none';
+          const opt = this.options.find(o => o.value === this.selectedValue);
+          this.input.value = opt ? (opt.value ? opt.text : '') : '';
+        });
+
+        this.input.addEventListener('input', () => {
+          if (this.disabled) return;
+          this.dropdown.style.display = 'block';
+          this.renderOptions(this.input.value);
+          
+          if (this.input.value.trim() === '') {
+            this.selectedValue = '';
+            if (this.onSelect) this.onSelect('');
+          }
+        });
+      }
+    }
+
+    // Initialize SearchableSelect instances
+    const modelSelect = new SearchableSelect('selectModelContainer', 'Tümü (Tüm Modeller)', (val) => {
+      updateFirmwareFilterSelect(val);
+      renderGallery();
+    });
+
+    const firmwareSelect = new SearchableSelect('selectFirmwareContainer', 'Tümü (Tüm Yazılımlar)', (val) => {
+      renderGallery();
+    });
+
     // ===== Load Models (from Firestore) =====
     async function loadModels() {
       try {
@@ -806,17 +985,14 @@
         cachedModels.sort((a, b) => a.id.localeCompare(b.id, 'tr'));
         
         // Populate filter dropdowns
-        const selectedModel = filterModel.value;
-        const selectedFirmware = filterFirmware.value;
+        const selectedModel = modelSelect.selectedValue;
+        const selectedFirmware = firmwareSelect.selectedValue;
 
-        filterModel.innerHTML = '<option value="">Tümü (Tüm Modeller)</option>';
+        const modelOpts = [{ value: '', text: 'Tümü (Tüm Modeller)' }];
         selectMgmtModel.innerHTML = '<option value="" disabled selected>Model seçin</option>';
 
         cachedModels.forEach(m => {
-          const opt1 = document.createElement('option');
-          opt1.value = m.id;
-          opt1.textContent = m.id;
-          filterModel.appendChild(opt1);
+          modelOpts.push({ value: m.id, text: m.id });
 
           const opt2 = document.createElement('option');
           opt2.value = m.id;
@@ -824,12 +1000,14 @@
           selectMgmtModel.appendChild(opt2);
         });
 
+        modelSelect.setOptions(modelOpts);
+
         if (selectedModel) {
-          filterModel.value = selectedModel;
+          modelSelect.setValue(selectedModel);
           updateFirmwareFilterSelect(selectedModel, selectedFirmware);
         } else {
-          filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
-          filterFirmware.disabled = true;
+          firmwareSelect.setOptions([{ value: '', text: 'Tümü (Tüm Yazılımlar)' }]);
+          firmwareSelect.setDisabled(true);
         }
       } catch (err) {
         console.error("Cihaz modelleri yüklenemedi:", err);
@@ -839,42 +1017,32 @@
     // Update Firmware filter select
     function updateFirmwareFilterSelect(modelId, selectedFirmwareId = '') {
       if (!modelId) {
-        filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
-        filterFirmware.disabled = true;
+        firmwareSelect.setOptions([{ value: '', text: 'Tümü (Tüm Yazılımlar)' }]);
+        firmwareSelect.setDisabled(true);
         return;
       }
 
       const model = cachedModels.find(m => m.id === modelId);
       if (!model || !model.firmwares || model.firmwares.length === 0) {
-        filterFirmware.innerHTML = '<option value="">Yazılım tanımlanmamış</option>';
-        filterFirmware.disabled = true;
+        firmwareSelect.setOptions([{ value: '', text: 'Yazılım tanımlanmamış' }]);
+        firmwareSelect.setDisabled(true);
         return;
       }
 
-      filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
+      const fwOpts = [{ value: '', text: 'Tümü (Tüm Yazılımlar)' }];
       model.firmwares.forEach(fw => {
-        const opt = document.createElement('option');
-        opt.value = fw;
-        opt.textContent = fw;
-        filterFirmware.appendChild(opt);
+        fwOpts.push({ value: fw, text: fw });
       });
-      filterFirmware.disabled = false;
+      
+      firmwareSelect.setOptions(fwOpts);
+      firmwareSelect.setDisabled(false);
 
       if (selectedFirmwareId && model.firmwares.includes(selectedFirmwareId)) {
-        filterFirmware.value = selectedFirmwareId;
+        firmwareSelect.setValue(selectedFirmwareId);
       }
     }
 
     // Change listeners for filters
-    filterModel.addEventListener('change', () => {
-      updateFirmwareFilterSelect(filterModel.value);
-      renderGallery();
-    });
-
-    filterFirmware.addEventListener('change', () => {
-      renderGallery();
-    });
-
     filterBand.addEventListener('change', () => {
       renderGallery();
     });
@@ -882,9 +1050,9 @@
     btnClearFilters.addEventListener('click', () => {
       searchInput.value = '';
       searchClear.style.display = 'none';
-      filterModel.value = '';
-      filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
-      filterFirmware.disabled = true;
+      modelSelect.setValue('');
+      firmwareSelect.setOptions([{ value: '', text: 'Tümü (Tüm Yazılımlar)' }]);
+      firmwareSelect.setDisabled(true);
       filterBand.value = '';
       renderGallery();
       showToast('ℹ️ Tüm filtreler sıfırlandı.', 'success');
@@ -918,8 +1086,8 @@
     function renderGallery() {
       const query = searchInput.value.trim().toLowerCase();
       
-      const selectedModel = filterModel.value;
-      const selectedFirmware = filterFirmware.value;
+      const selectedModel = modelSelect.selectedValue;
+      const selectedFirmware = firmwareSelect.selectedValue;
       const selectedBand = filterBand.value;
 
       const filtered = allGallery.filter(item => {
