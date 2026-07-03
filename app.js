@@ -591,8 +591,8 @@
       chartInstance.destroy();
     }
 
-    // Downsample only if dataset is extremely large (e.g. > 10000 points) to preserve every single second
-    const data = downsampleData(rawData, 10000);
+    // Downsample only if dataset is extremely large (e.g. > 100000 points) to preserve every single second
+    const data = downsampleData(rawData, 100000);
     const isLarge = rawData.length > 500;
 
     const canvas = document.getElementById('throughputChart');
