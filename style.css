@@ -941,3 +941,60 @@ body {
     padding: 20px;
   }
 }
+
+/* ===== Floating Container for Buttons ===== */
+.fab-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 900;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Modifying .fab-gallery position since it's now in a container */
+.fab-gallery {
+  position: static !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ===== Floating Logout Button ===== */
+.fab-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: white;
+  border: 1px solid var(--error-border);
+  border-radius: 100px;
+  color: var(--error-text);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: transform var(--transition-bounce), box-shadow var(--transition-smooth), background var(--transition-fast);
+}
+
+.fab-logout:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(239, 68, 68, 0.15);
+  background: var(--error-bg);
+}
+
+.fab-logout svg {
+  flex-shrink: 0;
+}
+
+/* Responsive adjustment for Logout Button */
+@media (max-width: 768px) {
+  .fab-logout span {
+    display: none;
+  }
+  .fab-logout {
+    padding: 12px;
+    border-radius: 50%;
+  }
+}
+

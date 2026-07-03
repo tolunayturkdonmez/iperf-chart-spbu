@@ -14,8 +14,14 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Firestore reference
+// Firestore & Auth references
 const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Validate if email belongs to tp-link domain
+function isTPLinkEmail(email) {
+  return /@tp-link\.[a-zA-Z0-9.-]+$/i.test(email);
+}
 
 // Collection name
 const COLLECTION_NAME = 'testResults';
