@@ -373,6 +373,7 @@
 
   <!-- Floating Buttons -->
   <div class="fab-container">
+    <span class="user-badge" id="userBadge" style="display:none;"></span>
     <a href="index.html" class="fab-gallery" id="fabHome" title="Analiz Sayfası">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
       <span>Analiz Sayfası</span>
@@ -400,12 +401,30 @@
         window.location.href = 'login.html?redirected=true';
       } else {
         document.documentElement.style.visibility = 'visible';
+        const userBadge = document.getElementById('userBadge');
+        if (userBadge) {
+          userBadge.textContent = `${user.email} hesabıyla oturum açıldı.`;
+          userBadge.style.display = 'inline-flex';
+        }
       }
     });
 
-    document.getElementById('btnLogout').addEventListener('click', () => {
+    // Smooth page transition for home link
+    document.getElementById('fabHome').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 250);
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.style.opacity = '0';
       auth.signOut().then(() => {
-        window.location.href = 'login.html';
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 250);
       });
     });
   </script>
