@@ -10,6 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="favicon.png">
+  <script>
+    document.write('<style>body { opacity: 0 !important; }</style>');
+  </script>
 </head>
 <body>
 
@@ -193,7 +196,6 @@
 
   <!-- Floating Gallery Button & Logout Button -->
   <div class="fab-container">
-    <span class="user-badge" id="userBadge" style="display:none;"></span>
     <a href="gallery.html" class="fab-gallery" id="fabGallery" title="Kayıtlı Test Sonuçları">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M2 13l4-4 3 3 4-5 5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7.5" r="1.5" fill="currentColor"/></svg>
       <span>Kayıtlı Test Sonuçları</span>
@@ -204,6 +206,9 @@
     </button>
   </div>
 
+  <!-- Subtle Logged In User Text (Bottom Right) -->
+  <span class="user-status-text" id="userStatusText"></span>
+
   <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
 
@@ -213,19 +218,21 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
 
-  <!-- Prevent UI flashing before auth check -->
+  <!-- Prevent UI flashing & handle page transitions -->
   <script>
-    document.documentElement.style.visibility = 'hidden';
     auth.onAuthStateChanged((user) => {
       if (!user || !isTPLinkEmail(user.email)) {
         window.location.href = 'login.html?redirected=true';
       } else {
-        document.documentElement.style.visibility = 'visible';
-        const userBadge = document.getElementById('userBadge');
-        if (userBadge) {
-          userBadge.textContent = `${user.email} hesabıyla oturum açıldı.`;
-          userBadge.style.display = 'inline-flex';
+        const userStatusText = document.getElementById('userStatusText');
+        if (userStatusText) {
+          userStatusText.textContent = `${user.email} hesabıyla oturum açıldı.`;
         }
+        
+        // Trigger smooth fade-in after authentication resolves
+        const style = document.createElement('style');
+        style.innerHTML = 'body { opacity: 1 !important; }';
+        document.head.appendChild(style);
       }
     });
 

@@ -967,26 +967,28 @@ body {
   }
 }
 
-/* ===== Logged In User Badge ===== */
-.user-badge {
+/* ===== Subtle Logged In User Text (Bottom Right) ===== */
+.user-status-text {
+  position: fixed;
+  bottom: 12px;
+  right: 20px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  background: white;
-  border: 1px solid var(--card-border);
-  padding: 12px 18px;
-  border-radius: 100px;
-  font-weight: 600;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.02);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  z-index: 890;
+  pointer-events: none;
+  background: transparent;
+  letter-spacing: 0.02em;
 }
 
-@media (max-width: 992px) {
-  .user-badge {
-    display: none;
+@media (max-width: 768px) {
+  .user-status-text {
+    position: static;
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    padding-bottom: 12px;
   }
 }
 
