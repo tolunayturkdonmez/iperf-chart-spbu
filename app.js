@@ -592,6 +592,11 @@
     const canvas = document.getElementById('throughputChart');
     const ctx = canvas.getContext('2d');
 
+    // Prevent page scroll when scrolling wheel over the chart canvas
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
     const labels = data.map(d => {
       const t = d.endTime;
       if (t >= 3600) {
@@ -681,6 +686,10 @@
           },
           zoom: {
             zoom: {
+              wheel: {
+                enabled: true,
+                speed: 0.08
+              },
               drag: {
                 enabled: true,
                 backgroundColor: 'rgba(79, 193, 233, 0.15)',
@@ -693,7 +702,9 @@
               }
             },
             pan: {
-              enabled: false
+              enabled: true,
+              mode: 'x',
+              modifierKey: 'shift' // Hold Shift to pan, drag to zoom box
             }
           },
           decimation: isLarge ? {
