@@ -519,17 +519,51 @@
     return data.filter(d => (d.endTime - d.startTime) <= 10);
   }
 
-  // ===== Downsample for large datasets =====
+  // ===== Downsample for large datasets (Min/Max Decimation to preserve drops & peaks) =====
   function downsampleData(data, maxPoints) {
     if (data.length <= maxPoints) return data;
-    const factor = Math.ceil(data.length / maxPoints);
+    
+    // Since we will output at most 2 points (min & max) per chunk,
+    // the number of chunks should be maxPoints / 2.
+    const numChunks = Math.floor(maxPoints / 2);
+    const chunkSize = Math.ceil(data.length / numChunks);
+    
     const result = [];
-    for (let i = 0; i < data.length; i += factor) {
-      const chunk = data.slice(i, Math.min(i + factor, data.length));
-      const avgMbps = chunk.reduce((sum, d) => sum + d.mbps, 0) / chunk.length;
-      // Use the last point's time for the label
-      const last = chunk[chunk.length - 1];
-      result.push({ startTime: chunk[0].startTime, endTime: last.endTime, mbps: avgMbps });
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.slice(i, Math.min(i + chunkSize, data.length));
+      if (chunk.length === 0) continue;
+      if (chunk.length === 1) {
+        result.push(chunk[0]);
+        continue;
+      }
+      
+      let minIdx = 0;
+      let maxIdx = 0;
+      let minVal = chunk[0].mbps;
+      let maxVal = chunk[0].mbps;
+      
+      for (let j = 1; j < chunk.length; j++) {
+        const val = chunk[j].mbps;
+        if (val < minVal) {
+          minVal = val;
+          minIdx = j;
+        }
+        if (val > maxVal) {
+          maxVal = val;
+          maxIdx = j;
+        }
+      }
+      
+      // Push min and max in chronological order
+      if (minIdx < maxIdx) {
+        result.push(chunk[minIdx]);
+        result.push(chunk[maxIdx]);
+      } else if (minIdx > maxIdx) {
+        result.push(chunk[maxIdx]);
+        result.push(chunk[minIdx]);
+      } else {
+        result.push(chunk[minIdx]);
+      }
     }
     return result;
   }
