@@ -313,6 +313,33 @@
       cursor: not-allowed;
       color: #94a3b8;
     }
+    .btn-clear-filters {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      background: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      height: 42px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-clear-filters:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+    }
+    .btn-clear-filters:active {
+      transform: scale(0.98);
+    }
 
     /* Lightbox */
     .lightbox-overlay {
@@ -439,7 +466,7 @@
       </button>
     </div>
 
-    <!-- Dropdown Filters (Model & Yazılım Listbox) -->
+    <!-- Dropdown Filters (Model & Yazılım & Band Listbox) -->
     <div class="gallery-filters">
       <div class="filter-group">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -455,6 +482,21 @@
         <select id="filterFirmware" class="filter-select" disabled>
           <option value="" selected>Tümü (Tüm Yazılımlar)</option>
         </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterBand">Band</label>
+        <select id="filterBand" class="filter-select">
+          <option value="" selected>Tümü (Tüm Bandlar)</option>
+          <option value="2.4GHz">2.4 GHz</option>
+          <option value="5GHz">5 GHz</option>
+          <option value="6GHz">6 GHz</option>
+          <option value="MLO">MLO</option>
+        </select>
+      </div>
+      <div class="filter-group" style="justify-content: flex-end;">
+        <button class="btn-clear-filters" id="btnClearFilters" title="Tüm filtreleri ve aramayı sıfırla">
+          Filtreleri Temizle
+        </button>
       </div>
     </div>
 
@@ -736,6 +778,8 @@
 
     const filterModel = document.getElementById('filterModel');
     const filterFirmware = document.getElementById('filterFirmware');
+    const filterBand = document.getElementById('filterBand');
+    const btnClearFilters = document.getElementById('btnClearFilters');
     const btnManageDevices = document.getElementById('btnManageDevices');
 
     const deviceMgmtModal = document.getElementById('deviceMgmtModal');
@@ -831,6 +875,21 @@
       renderGallery();
     });
 
+    filterBand.addEventListener('change', () => {
+      renderGallery();
+    });
+
+    btnClearFilters.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.style.display = 'none';
+      filterModel.value = '';
+      filterFirmware.innerHTML = '<option value="">Tümü (Tüm Yazılımlar)</option>';
+      filterFirmware.disabled = true;
+      filterBand.value = '';
+      renderGallery();
+      showToast('ℹ️ Tüm filtreler sıfırlandı.', 'success');
+    });
+
     // ===== Load from Firestore =====
     async function loadGallery() {
       galleryContent.innerHTML = `
@@ -861,6 +920,7 @@
       
       const selectedModel = filterModel.value;
       const selectedFirmware = filterFirmware.value;
+      const selectedBand = filterBand.value;
 
       const filtered = allGallery.filter(item => {
         // Text Search Match
@@ -885,7 +945,13 @@
           firmwareMatch = (item.firmware === selectedFirmware);
         }
 
-        return textMatch && modelMatch && firmwareMatch;
+        // Band Dropdown Match
+        let bandMatch = true;
+        if (selectedBand) {
+          bandMatch = (item.band === selectedBand);
+        }
+
+        return textMatch && modelMatch && firmwareMatch && bandMatch;
       });
 
       if (allGallery.length === 0) {
@@ -901,7 +967,7 @@
       }
 
       galleryActions.style.display = 'flex';
-      galleryCount.textContent = (query || selectedModel || selectedFirmware)
+      galleryCount.textContent = (query || selectedModel || selectedFirmware || selectedBand)
         ? `${filtered.length} / ${allGallery.length} sonuç`
         : `${allGallery.length} kayıt`;
 
