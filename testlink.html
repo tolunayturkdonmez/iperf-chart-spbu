@@ -414,40 +414,135 @@
       color: #ffffff !important;
     }
 
-    /* Collapsible Accordion & Test Case Item Premium Styling */
-    .accordion-item {
-      border: 1px solid var(--card-border) !important;
-      background: var(--card-bg) !important;
+    /* Premium Modern Accordion Folders */
+    .suite-folder-card {
+      border: 1px solid var(--card-border);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
       margin-bottom: 12px;
-      border-radius: var(--radius-md) !important;
       overflow: hidden;
-      box-shadow: var(--card-shadow);
+      transition: all 0.25s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    .accordion-button {
-      font-weight: 700;
-      font-size: 0.92rem;
-      background: var(--bg-secondary) !important;
-      color: var(--text-primary) !important;
-      border: none !important;
-      padding: 16px 20px;
+    .suite-folder-card:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     }
-    .accordion-button:not(.collapsed) {
-      background: var(--accent-light) !important;
-      color: var(--accent-dark) !important;
-      box-shadow: none !important;
-    }
-    .accordion-button::after {
-      filter: grayscale(1) invert(var(--dark-mode-invert, 0));
-    }
-    body.dark-mode .accordion-button::after {
-      filter: invert(1);
-    }
-    .accordion-body {
-      padding: 16px 20px;
+    .suite-folder-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
       background: var(--card-bg);
+      transition: background 0.2s ease;
+    }
+    .suite-folder-header:hover {
+      background: rgba(79, 193, 233, 0.04);
+    }
+    .suite-folder-title {
+      font-weight: 700;
+      font-size: 0.86rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 70%;
+    }
+    .suite-folder-icon {
+      font-size: 0.95rem;
+      color: var(--accent-primary);
+      transition: transform 0.2s ease;
+    }
+    .suite-folder-chevron {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    /* Expanded states */
+    .suite-folder-card.is-open .suite-folder-chevron {
+      transform: rotate(180deg);
+    }
+    .suite-folder-card.is-open {
+      border-color: var(--accent-primary);
+      background: var(--card-bg);
+    }
+
+    .suite-folder-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--bg-secondary);
+      border-top: 0 solid var(--card-border);
+    }
+    .suite-folder-card.is-open .suite-folder-body {
+      max-height: 1000px; /* arbitrary height limit to enable transition */
+      border-top: 1px solid var(--card-border);
+    }
+    
+    .suite-folder-content {
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+    }
+
+    /* Modernized Test Item styling */
+    .modern-test-item {
+      padding: 10px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      background: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.78rem;
+    }
+    .modern-test-item:hover {
+      transform: translateX(3px);
+      border-color: var(--accent-primary);
+      background: rgba(79, 193, 233, 0.02);
+    }
+    .modern-test-item.is-active {
+      border-color: var(--accent-primary) !important;
+      background: var(--accent-light) !important;
+      box-shadow: 0 2px 8px rgba(79, 193, 233, 0.1);
+    }
+    body.dark-mode .modern-test-item.is-active {
+      background: rgba(79, 193, 233, 0.15) !important;
+    }
+    
+    .test-item-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+      flex-grow: 1;
+      text-align: left;
+    }
+    .test-item-id {
+      font-weight: 700;
+      color: var(--accent-dark);
+      font-size: 0.7rem;
+    }
+    .test-item-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .test-item-status-pill {
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 100px;
+      margin-left: 10px;
+      flex-shrink: 0;
+      text-align: center;
     }
 
     /* Make page layout fluid to utilize full width */
@@ -557,15 +652,6 @@
       
       <!-- Top controls -->
       <div class="d-flex align-items-center gap-3">
-        <!-- Role Switcher -->
-        <div class="d-flex align-items-center gap-2">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Mod:</span>
-          <select id="roleSelect" class="role-select-badge">
-            <option value="Admin">Admin (Yönetici)</option>
-            <option value="Tester" selected>Tester (Test Mühendisi)</option>
-            <option value="Viewer">Viewer (İzleyici)</option>
-          </select>
-        </div>
 
         <!-- Dark Mode Toggle -->
         <button class="btn-theme-toggle" id="btnThemeToggle" title="Temayı Değiştir">
@@ -668,17 +754,17 @@
           </div>
         </div>
 
-        <!-- 2. Test Senaryoları Akordeon Listesi (Sol Sidebar Altında) -->
-        <div class="card p-3" style="flex-grow:1; display:flex; flex-direction:column; overflow:hidden; background: var(--card-bg); min-height: 380px;">
-          <div class="tree-title mb-2" style="font-size:0.8rem; font-weight:700;">
-            <span>📋 Test Senaryoları</span>
+        <!-- 2. Test Senaryoları Klasör Listesi (Modern Akordeon) -->
+        <div class="card p-3" style="flex-grow:1; display:flex; flex-direction:column; overflow:hidden; background: var(--card-bg); min-height: 420px;">
+          <div class="tree-title mb-2" style="font-size:0.85rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em;">
+            <i class="fa-solid fa-list-check text-primary me-1"></i> Test Senaryoları Klasörleri
           </div>
 
           <!-- Hidden empty container to prevent JS reference breaks -->
           <div id="importExcelSection" class="d-none"></div>
 
-          <!-- Scrollable Accordion Container inside Sidebar -->
-          <div id="testSuitesAccordion" class="accordion" style="overflow-y:auto; flex-grow:1; max-height: 480px; padding-right:2px; font-size:0.8rem;">
+          <!-- Custom Collapsible Folder Container -->
+          <div id="testSuitesAccordion" style="overflow-y:auto; flex-grow:1; max-height: 520px; padding-right:2px;">
             <div class="p-3 text-center text-muted" style="font-size: 0.74rem;">Önce yazılım sürümü seçin.</div>
           </div>
         </div>
@@ -697,39 +783,15 @@
 
           <!-- + New Firmware (Visible for Admin) & Category Template Upload -->
           <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-danger d-flex align-items-center gap-2 d-none" id="btnDeleteFirmware" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;" title="Sürümü ve testlerini sil">
+              <i class="fa-solid fa-trash-can"></i> Sürümü Sil
+            </button>
             <button class="btn btn-outline-success d-flex align-items-center gap-2" id="btnUploadTemplateModal" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;">
               <i class="fa-solid fa-file-excel"></i> Kategori Şablonu Yükle
             </button>
             <button class="btn btn-primary d-flex align-items-center gap-2" id="btnNewFirmware" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;">
               <i class="fa-solid fa-plus"></i> Sürüm Tanımla (New Firmware)
             </button>
-          </div>
-        </div>
-
-        <!-- Firmware Info Card (Visible when firmware is selected) -->
-        <div class="card p-3" id="firmwareInfoCard" style="display:none; position:relative; min-height: 85px;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <h2 style="font-size: 1.15rem; font-weight:800; color:var(--text-primary); margin:0;" id="infoTitle">EX520v — 240620</h2>
-                <span class="badge bg-info text-white" id="infoStatus" style="font-size:0.68rem; padding: 2px 6px;">In Progress</span>
-              </div>
-              <p style="font-size: 0.8rem; color:var(--text-secondary); margin:0;" id="infoDesc">Sürüm açıklaması buraya yüklenecektir.</p>
-            </div>
-            
-            <!-- Admin delete firmware option -->
-            <button class="btn btn-sm btn-outline-danger d-none" id="btnDeleteFirmware" title="Sürümü ve testlerini sil" style="font-size:0.75rem; padding: 2px 8px;">
-              <i class="fa-solid fa-trash-can"></i> Sürümü Sil
-            </button>
-          </div>
-
-          <!-- Muted Gray Footer Metadata at bottom-right -->
-          <div style="margin-top: 12px; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:12px; font-size:0.72rem; color:var(--text-muted); font-weight:500;">
-            <span>Cihaz: <strong id="infoModel" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
-            <span>Sürüm: <strong id="infoFw" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
-            <span>Yayın: <strong id="infoDate" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
-            <span>Yazar: <strong id="infoCreator" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
-            <span>Build: <strong id="infoBuild" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
           </div>
         </div>
 
@@ -742,15 +804,8 @@
 
         <!-- Test Case Detail Area (Visible when firmware is selected) -->
         <div id="testCasesPanel" class="d-none" style="display:flex; flex-direction:column; gap:20px;">
-          <!-- 📋 Test Senaryosu Seçilmedi Kartı -->
-          <div class="card p-5 text-center" id="noCaseSelectedPanel">
-            <div style="font-size: 3rem; margin-bottom:12px; opacity:0.8;">📋</div>
-            <h5 class="fw-bold">Test Senaryosu Seçilmedi</h5>
-            <p class="text-muted mx-auto" style="max-width:420px; font-size:0.84rem;">Soldaki test senaryoları listesinden detayını görüntülemek ve test sonucunu girmek istediğiniz bir test maddesini seçin.</p>
-          </div>
-
           <!-- 📋 Test Detay Kartı (Master-Detail Embedded View) -->
-          <div class="card p-4 d-none" id="caseDetailCard" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); box-shadow: var(--card-shadow);">
+          <div class="card p-4" id="caseDetailCard" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); box-shadow: var(--card-shadow);">
             <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
               <h3 class="fw-bold" style="font-size:1.1rem; margin:0; color:var(--text-primary);" id="detailCardTitle">TC-001 Detayları</h3>
               <span class="badge bg-secondary text-white" id="detPriority" style="font-size:0.72rem; padding: 3px 10px; text-transform:none;">Medium</span>
@@ -770,76 +825,72 @@
               </div>
             </div>
 
-            <!-- Middle: Horizontal Metadata Bar -->
-            <div class="info-bar-horizontal mb-4" style="display:flex; flex-wrap:wrap; gap:24px; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 14px 18px;">
-              <div class="info-item" style="display:flex; flex-direction:column; gap:2px; border-right:1px solid var(--card-border); padding-right:24px;">
-                <span class="info-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Test ID</span>
-                <span class="info-value text-primary fw-bold" style="font-size:0.86rem;" id="detId">—</span>
-              </div>
-              <div class="info-item" style="display:flex; flex-direction:column; gap:2px; border-right:1px solid var(--card-border); padding-right:24px;">
-                <span class="info-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Test Suite</span>
-                <span class="info-value fw-semibold" style="font-size:0.84rem;" id="detSuite">—</span>
-              </div>
-              <div class="info-item" style="display:flex; flex-direction:column; gap:2px; flex-grow:1; min-width:0;">
-                <span class="info-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Test Senaryosu</span>
-                <span class="info-value fw-semibold text-truncate" style="font-size:0.84rem; display:block;" id="detCase">—</span>
-              </div>
-            </div>
-
-            <!-- Bottom: Sol/Sağ split (Sol: Ekler | Sağ: Sonuç & Yorum & Geçmiş) -->
+            <!-- Bottom: Sol/Sağ split (Left: Test Sonuç Girişi | Right: Testlere Ait Dosya Ekleri) -->
             <div class="row g-4">
-              <!-- Sol Sütun: Dosya Ekleri -->
-              <div class="col-md-6 border-end pe-md-4">
-                <div class="detail-section">
-                  <div class="detail-label fw-bold text-muted mb-2" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">
-                    <i class="fa-solid fa-paperclip text-secondary me-1"></i> Dosya Ekleri (Attachments)
+              <!-- Sol Sütun: Test Sonuç Girişi -->
+              <div class="col-md-6 pe-md-3">
+                <div class="procedure-card p-3 mb-3" style="background: var(--bg-secondary); border-left: 4px solid var(--accent-primary); border-radius: var(--radius-sm); border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);">
+                  <div class="detail-label fw-bold text-secondary mb-3" style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em;">
+                    <i class="fa-solid fa-square-poll-vertical text-primary me-1"></i> Test Sonuç Girişi
                   </div>
-                  <div id="attachmentsContainer" class="mb-3"></div>
-                  <div class="input-group input-group-sm mb-2" id="attachmentUploadForm" style="display:none;">
-                    <input type="file" class="form-control" id="attachmentFileInput" style="font-size:0.78rem;">
-                    <button class="btn btn-outline-primary" type="button" id="btnUploadAttachment" style="font-size:0.78rem;">Yükle</button>
+                  
+                  <div class="form-group mb-2">
+                    <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detResult">Test Sonucu</label>
+                    <select id="detResult" class="form-select form-select-sm" style="font-size:0.82rem; margin-top:2px;">
+                      <option value="Not Run">Not Run</option>
+                      <option value="Pass">Pass</option>
+                      <option value="Partial OK (POK)">Partial OK (POK)</option>
+                      <option value="Fail">Fail</option>
+                      <option value="Blocked">Blocked</option>
+                      <option value="Retest">Retest</option>
+                    </select>
                   </div>
-                </div>
-              </div>
 
-              <!-- Sağ Sütun: Test Sonuç Girişi -->
-              <div class="col-md-6 ps-md-4">
-                <h5 class="fw-bold mb-3 d-flex align-items-center gap-1" style="font-size:0.88rem; color:var(--text-primary);">
-                  <i class="fa-solid fa-square-poll-vertical text-primary"></i> Test Sonuç Girişi
-                </h5>
-                
-                <div class="form-group mb-2">
-                  <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detResult">Test Sonucu</label>
-                  <select id="detResult" class="form-select form-select-sm" style="font-size:0.82rem; margin-top:2px;">
-                    <option value="Not Run">Not Run</option>
-                    <option value="Pass">Pass</option>
-                    <option value="Partial OK (POK)">Partial OK (POK)</option>
-                    <option value="Fail">Fail</option>
-                    <option value="Blocked">Blocked</option>
-                    <option value="Retest">Retest</option>
-                  </select>
-                </div>
+                  <div class="form-group mb-2">
+                    <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detTester">Test Eden (Tester)</label>
+                    <input type="text" id="detTester" class="form-control form-control-sm" style="font-size:0.82rem; margin-top:2px;" readonly>
+                  </div>
 
-                <div class="form-group mb-2">
-                  <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detTester">Test Eden (Tester)</label>
-                  <input type="text" id="detTester" class="form-control form-control-sm" style="font-size:0.82rem; margin-top:2px;" readonly>
-                </div>
+                  <div class="form-group mb-3">
+                    <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detComment">Yorum (Comment)</label>
+                    <textarea id="detComment" class="form-control form-control-sm" rows="3" placeholder="Testle ilgili yorum yazın..." style="font-size:0.82rem; margin-top:2px;"></textarea>
+                  </div>
 
-                <div class="form-group mb-3">
-                  <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detComment">Yorum (Comment)</label>
-                  <textarea id="detComment" class="form-control form-control-sm" rows="3" placeholder="Testle ilgili yorum yazın..." style="font-size:0.82rem; margin-top:2px;"></textarea>
+                  <button class="btn btn-sm btn-primary w-100 mb-1" id="btnSaveResult" style="font-weight:600; font-size:0.82rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Test Sonucunu Kaydet
+                  </button>
                 </div>
-
-                <button class="btn btn-sm btn-primary w-100 mb-4" id="btnSaveResult" style="font-weight:600; font-size:0.82rem;">
-                  <i class="fa-solid fa-floppy-disk"></i> Test Sonucunu Kaydet
-                </button>
 
                 <!-- Değişiklik Geçmişi (History) -->
-                <div class="detail-section border-top pt-3">
-                  <div class="detail-label fw-bold text-muted mb-2" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">
-                    <i class="fa-solid fa-history text-secondary me-1"></i> Değişiklik Geçmişi
+                <div class="procedure-card p-3 mb-3" style="background: var(--bg-secondary); border-left: 4px solid var(--text-muted); border-radius: var(--radius-sm); border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);">
+                  <div class="detail-label fw-bold text-secondary mb-2" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">
+                    <i class="fa-solid fa-history text-primary me-1"></i> Değişiklik Geçmişi
                   </div>
                   <ul id="historyList" class="p-0 m-0" style="list-style:none; font-size:0.76rem; max-height: 120px; overflow-y:auto; line-height:1.4;"></ul>
+                </div>
+              </div>
+
+              <!-- Sağ Sütun: Dosya Ekleri -->
+              <div class="col-md-6 ps-md-3">
+                <div class="procedure-card p-3 mb-3" id="detAttachmentsContainer" style="background: var(--bg-secondary); border-left: 4px solid var(--accent-primary); border-radius: var(--radius-sm); border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border); height: 100%;">
+                  <div class="detail-label fw-bold text-secondary mb-3" style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em;">
+                    <i class="fa-solid fa-paperclip text-primary me-1"></i> Testlere Ait Dosya Ekleri
+                  </div>
+                  <div id="attachmentsContainer" class="mb-3" style="max-height: 250px; overflow-y:auto; padding-right: 4px;"></div>
+                  
+                  <!-- Premium Custom Centered Upload Area -->
+                  <div id="attachmentUploadForm" style="display:none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--card-border);">
+                    <div class="d-flex flex-column align-items-center gap-2 w-100">
+                      <label class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 px-3 py-2" style="font-size:0.78rem; font-weight:600; cursor:pointer; margin:0; border-radius: var(--radius-sm); transition: all 0.2s ease;">
+                        <i class="fa-solid fa-cloud-arrow-up text-primary" style="font-size: 0.9rem;"></i> Dosya Seç
+                        <input type="file" id="attachmentFileInput" style="display:none;">
+                      </label>
+                      <span id="fileNameLabel" class="text-muted text-center" style="font-size:0.75rem; font-weight: 500; word-break: break-all; max-width: 90%; display: block;">Seçilmedi</span>
+                    </div>
+                    <button class="btn btn-sm btn-primary d-flex align-items-center justify-content-center gap-2 px-4 py-2" type="button" id="btnUploadAttachment" style="font-size:0.78rem; font-weight:600; border-radius: var(--radius-sm); min-width: 140px;" disabled>
+                      <i class="fa-solid fa-upload"></i> Yükle
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -990,20 +1041,11 @@
       const modelSelect = document.getElementById('modelSelect');
       const versionSelect = document.getElementById('versionSelect');
       const emptyStatePanel = document.getElementById('emptyStatePanel');
-      const firmwareInfoCard = document.getElementById('firmwareInfoCard');
       const testCasesPanel = document.getElementById('testCasesPanel');
       const importExcelSection = document.getElementById('importExcelSection');
       const testSuitesAccordion = document.getElementById('testSuitesAccordion');
       const tableControls = document.getElementById('tableControls');
-
-      const infoTitle = document.getElementById('infoTitle');
-      const infoDesc = document.getElementById('infoDesc');
-      const infoModel = document.getElementById('infoModel');
-      const infoFw = document.getElementById('infoFw');
-      const infoDate = document.getElementById('infoDate');
-      const infoBuild = document.getElementById('infoBuild');
-      const infoCreator = document.getElementById('infoCreator');
-      const infoStatus = document.getElementById('infoStatus');
+      const fileNameLabel = document.getElementById('fileNameLabel');
 
       // Theme toggle
       const btnThemeToggle = document.getElementById('btnThemeToggle');
@@ -1015,7 +1057,6 @@
       const toggleText = document.getElementById('toggleText');
 
       // Role Select
-      const roleSelect = document.getElementById('roleSelect');
       const btnNewFirmware = document.getElementById('btnNewFirmware');
       const btnDeleteFirmware = document.getElementById('btnDeleteFirmware');
       const btnUploadTemplateModal = document.getElementById('btnUploadTemplateModal');
@@ -1042,13 +1083,9 @@
       const btnLoadDefaultCases = document.getElementById('btnLoadDefaultCases');
 
       // Details Embedded Panels (Instead of Drawer)
-      const noCaseSelectedPanel = document.getElementById('noCaseSelectedPanel');
       const caseDetailCard = document.getElementById('caseDetailCard');
       const detailCardTitle = document.getElementById('detailCardTitle');
-      const detId = document.getElementById('detId');
-      const detSuite = document.getElementById('detSuite');
       const detPriority = document.getElementById('detPriority');
-      const detCase = document.getElementById('detCase');
       const detDescriptionView = document.getElementById('detDescriptionView');
       
       const detResult = document.getElementById('detResult');
@@ -1086,8 +1123,9 @@
       let firmwaresList = [];
       let activeFirmware = null; // { id, model, firmware, ... }
       let activeCases = []; // Array of test cases
-      let activeRole = 'Tester';
+      let activeRole = 'Admin';
       let activeCaseInDrawer = null;
+      const expandedSuites = new Set();
 
       // ===== Init & Themes =====
       if (localStorage.getItem('theme') === 'dark') {
@@ -1107,14 +1145,9 @@
         toggleText.textContent = isCollapsed ? 'Paneli Göster' : 'Paneli Gizle';
       });
 
-      // Role selection handler
-      roleSelect.addEventListener('change', () => {
-        activeRole = roleSelect.value;
-        applyRoleRestrictions();
-        if (activeFirmware) {
-          renderTestCasesAccordion();
-        }
-      });
+      // Role selection handler disabled as requested
+
+      // Dropdown listeners removed
 
       function applyRoleRestrictions() {
         if (activeRole === 'Admin') {
@@ -1214,10 +1247,8 @@
         // Hide panel details if user switches model
         activeFirmware = null;
         emptyStatePanel.style.display = 'block';
-        firmwareInfoCard.style.display = 'none';
         testCasesPanel.classList.add('d-none');
         dashboardStatsSection.style.display = 'none';
-        noCaseSelectedPanel.classList.remove('d-none');
         caseDetailCard.classList.add('d-none');
       });
 
@@ -1247,20 +1278,8 @@
         versionSelect.value = fw.id;
 
         emptyStatePanel.style.display = 'none';
-        firmwareInfoCard.style.display = 'block';
         testCasesPanel.classList.remove('d-none');
         dashboardStatsSection.style.display = 'block'; // Sürüm tıklandığında istatistik panelini göster
-
-        // Fill metadata
-        infoTitle.textContent = `${fw.model} — ${fw.firmware}`;
-        infoDesc.textContent = fw.description || 'Bu sürüme ait açıklama bulunmuyor.';
-        infoModel.textContent = fw.model;
-        infoFw.textContent = fw.firmware;
-        infoDate.textContent = fw.releaseDate || '—';
-        infoBuild.textContent = fw.buildNo || '—';
-        infoCreator.textContent = fw.createdBy || 'System';
-        infoStatus.textContent = fw.status || 'In Progress';
-        infoStatus.className = `badge bg-${fw.status === 'Completed' ? 'success' : 'info'} text-white`;
 
         await loadTestCases();
       }
@@ -1379,7 +1398,6 @@
 
         importExcelSection.classList.add('d-none');
         testSuitesAccordion.style.display = 'block';
-
         testSuitesAccordion.innerHTML = '';
 
         // Group by testSuite
@@ -1390,99 +1408,94 @@
         });
 
         // Loop testSuites keys
-        Object.keys(grouped).sort().forEach((suiteName, index) => {
+        Object.keys(grouped).sort().forEach(suiteName => {
           const cases = grouped[suiteName];
-          
-          // Calculate status for headers badge
           const passedCount = cases.filter(c => c.result === 'Pass').length;
           const totalCount = cases.length;
 
-          // Check if this suite contains the active case in drawer to keep it expanded
-          const containsActive = activeCaseInDrawer && cases.some(c => c.testId === activeCaseInDrawer.testId);
-
-          const accordionItem = document.createElement('div');
-          accordionItem.className = 'accordion-item';
-
-          const headerId = `heading_${index}`;
-          const collapseId = `collapse_${index}`;
-
-          const h2 = document.createElement('h2');
-          h2.className = 'accordion-header';
-          h2.id = headerId;
-
-          const btn = document.createElement('button');
-          btn.className = 'accordion-button';
-          if (!containsActive) {
-            btn.classList.add('collapsed');
+          // Check if this suite contains the active case in drawer or was manually expanded
+          let isExpanded = expandedSuites.has(suiteName);
+          if (!isExpanded && activeCaseInDrawer && cases.some(c => c.testId === activeCaseInDrawer.testId)) {
+            isExpanded = true;
+            expandedSuites.add(suiteName);
           }
-          btn.type = 'button';
-          btn.setAttribute('data-bs-toggle', 'collapse');
-          btn.setAttribute('data-bs-target', `#${collapseId}`);
-          btn.setAttribute('aria-expanded', containsActive ? 'true' : 'false');
-          btn.setAttribute('aria-controls', collapseId);
 
-          btn.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between w-100 me-3">
-              <span class="fw-bold text-truncate" style="max-width: calc(100% - 65px);"><i class="fa-solid fa-folder-open me-2 text-primary"></i>${escapeHtml(suiteName)}</span>
-              <span class="badge bg-secondary text-white" style="font-size:0.65rem; text-transform:none; font-weight:600; padding:2px 6px; flex-shrink: 0;">
+          const folderCard = document.createElement('div');
+          folderCard.className = 'suite-folder-card';
+          if (isExpanded) {
+            folderCard.classList.add('is-open');
+          }
+
+          const header = document.createElement('div');
+          header.className = 'suite-folder-header';
+          header.innerHTML = `
+            <div class="suite-folder-title">
+              <i class="fa-solid fa-folder-open suite-folder-icon"></i>
+              <span class="text-truncate" style="font-weight:700;">${escapeHtml(suiteName)}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-secondary text-white" style="font-size:0.65rem; text-transform:none; font-weight:600; padding:2px 6px;">
                 ${passedCount}/${totalCount}
               </span>
+              <i class="fa-solid fa-chevron-down suite-folder-chevron"></i>
             </div>
           `;
-          h2.appendChild(btn);
-          accordionItem.appendChild(h2);
 
-          const collapseDiv = document.createElement('div');
-          collapseDiv.id = collapseId;
-          collapseDiv.className = 'accordion-collapse collapse';
-          if (containsActive) {
-            collapseDiv.classList.add('show');
-          }
-          collapseDiv.setAttribute('aria-labelledby', headerId);
-          collapseDiv.setAttribute('data-bs-parent', '#testSuitesAccordion');
-
-          const bodyDiv = document.createElement('div');
-          bodyDiv.className = 'accordion-body';
+          const body = document.createElement('div');
+          body.className = 'suite-folder-body';
+          
+          const content = document.createElement('div');
+          content.className = 'suite-folder-content';
 
           // Loop cases in this Suite
           cases.sort((a,b) => a.testId.localeCompare(b.testId)).forEach(c => {
             const item = document.createElement('div');
-            item.className = 'test-item';
+            item.className = 'modern-test-item';
             
             // Add active highlight if selected
             if (activeCaseInDrawer && activeCaseInDrawer.testId === c.testId) {
-              item.classList.add('active-test-item');
+              item.classList.add('is-active');
             }
 
-            // Add status-based color class
-            if (c.result && c.result !== 'Not Run') {
-              const resClass = c.result === 'Pass' ? 'test-item-pass' :
-                               c.result === 'Partial OK (POK)' ? 'test-item-pok' :
-                               c.result === 'Fail' ? 'test-item-fail' :
-                               c.result === 'Blocked' ? 'test-item-blocked' :
-                               c.result === 'Retest' ? 'test-item-retest' : '';
-              if (resClass) item.classList.add(resClass);
-            }
+            // Status pill styling
+            let badgeBg = 'bg-secondary';
+            let badgeText = c.result || 'Not Run';
+            if (c.result === 'Pass') badgeBg = 'bg-success';
+            else if (c.result === 'Partial OK (POK)') badgeBg = 'bg-warning text-dark';
+            else if (c.result === 'Fail') badgeBg = 'bg-danger';
+            else if (c.result === 'Blocked') badgeBg = 'bg-info text-dark';
+            else if (c.result === 'Retest') badgeBg = 'bg-primary';
 
             item.innerHTML = `
-              <div class="d-flex align-items-start gap-2" style="max-width: 80%; text-align: left;">
-                <span class="fw-bold text-secondary" style="font-size:0.72rem; line-height: 1.3; flex-shrink: 0;">${c.testId}</span>
-                <span style="font-size:0.75rem; line-height: 1.3; font-weight: 500;">${escapeHtml(c.testCase)}</span>
+              <div class="test-item-left">
+                <span class="test-item-id">${c.testId}</span>
+                <span class="test-item-name" title="${escapeHtml(c.testCase)}">${escapeHtml(c.testCase)}</span>
               </div>
-              <span style="font-size:0.66rem; font-weight:700; opacity:0.85; margin-left: 8px; flex-shrink: 0;">${c.result}</span>
+              <span class="test-item-status-pill badge ${badgeBg}">${badgeText}</span>
             `;
 
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+              e.stopPropagation(); // prevent collapsing folder
               openCaseDetail(c);
             });
 
-            bodyDiv.appendChild(item);
+            content.appendChild(item);
           });
 
-          collapseDiv.appendChild(bodyDiv);
-          accordionItem.appendChild(collapseDiv);
+          body.appendChild(content);
+          folderCard.appendChild(header);
+          folderCard.appendChild(body);
 
-          testSuitesAccordion.appendChild(accordionItem);
+          header.addEventListener('click', () => {
+            const isOpen = folderCard.classList.toggle('is-open');
+            if (isOpen) {
+              expandedSuites.add(suiteName);
+            } else {
+              expandedSuites.delete(suiteName);
+            }
+          });
+
+          testSuitesAccordion.appendChild(folderCard);
         });
       }
 
@@ -1490,15 +1503,11 @@
       function openCaseDetail(c) {
         activeCaseInDrawer = c;
         
-        // Show detail card and hide no case selected panel
-        noCaseSelectedPanel.classList.add('d-none');
+        // Show detail card
         caseDetailCard.classList.remove('d-none');
 
         detailCardTitle.textContent = `${c.testId} Detayları`;
-        detId.textContent = c.testId;
-        detSuite.textContent = c.testSuite;
         detPriority.textContent = c.priority || 'Medium';
-        detCase.textContent = c.testCase;
         
         // Populate Description view
         detDescriptionView.innerHTML = c.description ? formatDescriptionText(c.description) : '<span class="text-muted" style="font-style: italic;">Açıklama/prosedür tanımlanmamış.</span>';
@@ -1506,7 +1515,7 @@
         // Fill result inputs inside detail card
         detResult.value = c.result || 'Not Run';
         detTester.value = c.tester || auth.currentUser?.email || 'System';
-        detComment.value = c.comment || '';
+        detComment.value = '';
         
         renderAttachments(c);
         renderHistory(c);
@@ -1550,6 +1559,7 @@
           calculateStats();
           renderTestCasesAccordion();
           showToast("💾 Test sonucu kaydedildi.", "success");
+          detComment.value = '';
         } catch (err) {
           alert("Kaydetme hatası: " + err.message);
         } finally {
@@ -1561,16 +1571,20 @@
       function renderAttachments(c) {
         attachmentsContainer.innerHTML = '';
         if (!c.attachments || c.attachments.length === 0) {
-          attachmentsContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem;">Dosya eklenmemiş.</span>';
+          attachmentsContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem; font-style: italic;">Dosya eklenmemiş.</span>';
           return;
         }
 
         c.attachments.forEach(att => {
           const div = document.createElement('div');
-          div.className = 'd-flex align-items-center justify-content-between p-1 bg-light border rounded mb-1';
+          div.className = 'd-flex align-items-center justify-content-between p-2 border rounded mb-2';
+          div.style.background = 'var(--card-bg)';
+          div.style.borderColor = 'var(--card-border)';
           div.style.fontSize = '0.78rem';
           div.innerHTML = `
-            <a href="${att.url}" download="${att.name}" class="text-truncate text-decoration-none fw-semibold" style="max-width:240px;"><i class="fa-solid fa-paperclip"></i> ${att.name}</a>
+            <a href="${att.url}" download="${att.name}" class="text-truncate text-decoration-none fw-semibold text-primary" style="max-width:240px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-file-arrow-down text-primary"></i> ${att.name}
+            </a>
             <span class="text-muted" style="font-size:0.7rem;">${att.date}</span>
           `;
           attachmentsContainer.appendChild(div);
@@ -1598,6 +1612,13 @@
         });
       }
 
+      // Sync file selector label dynamically
+      attachmentFileInput.addEventListener('change', () => {
+        const file = attachmentFileInput.files[0];
+        fileNameLabel.textContent = file ? file.name : 'Seçilmedi';
+        btnUploadAttachment.disabled = !file;
+      });
+
       // Drawer attachment upload
       btnUploadAttachment.addEventListener('click', async () => {
         const file = attachmentFileInput.files[0];
@@ -1621,11 +1642,12 @@
             
             renderAttachments(activeCaseInDrawer);
             attachmentFileInput.value = '';
+            fileNameLabel.textContent = 'Seçilmedi';
             showToast("📎 Dosya başarıyla eklendi.", "success");
           } catch (err) {
             alert("Dosya yüklenemedi: " + err.message);
           } finally {
-            btnUploadAttachment.disabled = false;
+            btnUploadAttachment.disabled = !attachmentFileInput.files[0];
           }
         };
         reader.readAsDataURL(file);
@@ -1819,7 +1841,6 @@
           
           // reset UI to empty
           emptyStatePanel.style.display = 'block';
-          firmwareInfoCard.style.display = 'none';
           testCasesPanel.classList.add('d-none');
           globalProgressSection.style.display = 'none';
 

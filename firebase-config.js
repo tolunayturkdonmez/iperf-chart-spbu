@@ -571,11 +571,11 @@ async function updateFirmwareTestCaseResult(firmwareId, testId, result, comment,
       action: `Sonuç değiştirildi: ${currentData.result || 'Not Run'} ➔ ${result}`
     });
   }
-  if (currentData.comment !== comment) {
+  if (currentData.comment !== comment && comment.trim() !== '') {
     history.push({
       date: timestamp,
       user: userEmail,
-      action: `Yorum güncellendi.`
+      action: `Yorum eklendi: "${comment}"`
     });
   }
 
