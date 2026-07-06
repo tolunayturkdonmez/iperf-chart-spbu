@@ -508,11 +508,54 @@
     }
     .modern-test-item.is-active {
       border-color: var(--accent-primary) !important;
-      background: var(--accent-light) !important;
-      box-shadow: 0 2px 8px rgba(79, 193, 233, 0.1);
+      border-width: 2px !important;
+      box-shadow: 0 4px 12px rgba(79, 193, 233, 0.15) !important;
     }
-    body.dark-mode .modern-test-item.is-active {
-      background: rgba(79, 193, 233, 0.15) !important;
+
+    /* Result-based backgrounds for card items (more saturated/darker) */
+    .modern-test-item.result-pass {
+      background: rgba(16, 185, 129, 0.14) !important;
+      border-color: rgba(16, 185, 129, 0.55) !important;
+    }
+    body.dark-mode .modern-test-item.result-pass {
+      background: rgba(16, 185, 129, 0.24) !important;
+      border-color: rgba(16, 185, 129, 0.75) !important;
+    }
+
+    .modern-test-item.result-pok {
+      background: rgba(245, 158, 11, 0.14) !important;
+      border-color: rgba(245, 158, 11, 0.55) !important;
+    }
+    body.dark-mode .modern-test-item.result-pok {
+      background: rgba(245, 158, 11, 0.24) !important;
+      border-color: rgba(245, 158, 11, 0.75) !important;
+    }
+
+    .modern-test-item.result-fail {
+      background: rgba(239, 68, 68, 0.14) !important;
+      border-color: rgba(239, 68, 68, 0.55) !important;
+    }
+    body.dark-mode .modern-test-item.result-fail {
+      background: rgba(239, 68, 68, 0.24) !important;
+      border-color: rgba(239, 68, 68, 0.75) !important;
+    }
+
+    .modern-test-item.result-blocked {
+      background: rgba(139, 92, 246, 0.14) !important;
+      border-color: rgba(139, 92, 246, 0.55) !important;
+    }
+    body.dark-mode .modern-test-item.result-blocked {
+      background: rgba(139, 92, 246, 0.24) !important;
+      border-color: rgba(139, 92, 246, 0.75) !important;
+    }
+
+    .modern-test-item.result-retest {
+      background: rgba(59, 130, 246, 0.14) !important;
+      border-color: rgba(59, 130, 246, 0.55) !important;
+    }
+    body.dark-mode .modern-test-item.result-retest {
+      background: rgba(59, 130, 246, 0.24) !important;
+      border-color: rgba(59, 130, 246, 0.75) !important;
     }
     
     .test-item-left {
@@ -639,6 +682,40 @@
 </head>
 <body>
 
+  <!-- Floating Top Right Controls Container -->
+  <div class="fab-container" style="flex-direction: column; align-items: flex-end; gap: 8px;">
+    <!-- Home Button (styled like index.html fab-logout/fab-gallery) -->
+    <a href="index.html" class="fab-gallery" id="btnHome" title="Portal Ana Sayfa">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Portal</span>
+    </a>
+
+    <!-- Management Actions Dropdown (Small button under Portal) -->
+    <div class="dropdown" id="mgmtDropdownContainer">
+      <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" id="btnMgmtDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:0.7rem; font-weight:600; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <i class="fa-solid fa-screwdriver-wrench text-secondary" style="font-size: 0.75rem;"></i> İşlemler
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnMgmtDropdown" style="font-size:0.76rem; border-radius: var(--radius-sm); border: 1px solid var(--card-border); background: var(--card-bg); box-shadow: var(--card-shadow); padding: 6px 0;">
+        <li>
+          <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="btnNewFirmware" style="color: var(--text-primary);">
+            <i class="fa-solid fa-plus text-primary"></i> Sürüm Tanımla
+          </button>
+        </li>
+        <li>
+          <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" id="btnUploadTemplateModal" style="color: var(--text-primary);">
+            <i class="fa-solid fa-file-excel text-success"></i> Kategori Şablonu Yükle
+          </button>
+        </li>
+        <li><hr class="dropdown-divider" style="margin: 4px 0; border-color: var(--card-border);"></li>
+        <li>
+          <button class="dropdown-item text-danger d-flex align-items-center gap-2 py-2 d-none" type="button" id="btnDeleteFirmware">
+            <i class="fa-solid fa-trash-can"></i> Sürümü Sil
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
   <div class="app-container" style="max-width: 1200px; padding-top: 30px;">
     <!-- Top Header -->
     <header class="app-header mb-4" style="flex-direction: row; justify-content: space-between; text-align: left; align-items: center; gap: 0;">
@@ -652,16 +729,10 @@
       
       <!-- Top controls -->
       <div class="d-flex align-items-center gap-3">
-
         <!-- Dark Mode Toggle -->
         <button class="btn-theme-toggle" id="btnThemeToggle" title="Temayı Değiştir">
           <i class="fa-solid fa-moon"></i>
         </button>
-
-        <!-- Home Button -->
-        <a href="index.html" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" id="btnHome" style="height: 38px; border-radius: var(--radius-sm); font-weight:600; padding: 0 14px;">
-          <i class="fa-solid fa-house"></i> Portal
-        </a>
       </div>
     </header>
 
@@ -755,11 +826,7 @@
         </div>
 
         <!-- 2. Test Senaryoları Klasör Listesi (Modern Akordeon) -->
-        <div class="card p-3" style="flex-grow:1; display:flex; flex-direction:column; overflow:hidden; background: var(--card-bg); min-height: 420px;">
-          <div class="tree-title mb-2" style="font-size:0.85rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em;">
-            <i class="fa-solid fa-list-check text-primary me-1"></i> Test Senaryoları Klasörleri
-          </div>
-
+        <div class="card p-3" id="testScenariosCard" style="flex-grow:1; display:none; flex-direction:column; overflow:hidden; background: var(--card-bg); min-height: 420px;">
           <!-- Hidden empty container to prevent JS reference breaks -->
           <div id="importExcelSection" class="d-none"></div>
 
@@ -780,19 +847,6 @@
             <i class="fa-solid fa-bars-staggered"></i>
             <span id="toggleText">Paneli Gizle</span>
           </button>
-
-          <!-- + New Firmware (Visible for Admin) & Category Template Upload -->
-          <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-outline-danger d-flex align-items-center gap-2 d-none" id="btnDeleteFirmware" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;" title="Sürümü ve testlerini sil">
-              <i class="fa-solid fa-trash-can"></i> Sürümü Sil
-            </button>
-            <button class="btn btn-outline-success d-flex align-items-center gap-2" id="btnUploadTemplateModal" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;">
-              <i class="fa-solid fa-file-excel"></i> Kategori Şablonu Yükle
-            </button>
-            <button class="btn btn-primary d-flex align-items-center gap-2" id="btnNewFirmware" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;">
-              <i class="fa-solid fa-plus"></i> Sürüm Tanımla (New Firmware)
-            </button>
-          </div>
         </div>
 
         <!-- Empty State Panel (when no firmware is selected) -->
@@ -1043,6 +1097,7 @@
       const emptyStatePanel = document.getElementById('emptyStatePanel');
       const testCasesPanel = document.getElementById('testCasesPanel');
       const importExcelSection = document.getElementById('importExcelSection');
+      const testScenariosCard = document.getElementById('testScenariosCard');
       const testSuitesAccordion = document.getElementById('testSuitesAccordion');
       const tableControls = document.getElementById('tableControls');
       const fileNameLabel = document.getElementById('fileNameLabel');
@@ -1250,6 +1305,7 @@
         testCasesPanel.classList.add('d-none');
         dashboardStatsSection.style.display = 'none';
         caseDetailCard.classList.add('d-none');
+        testScenariosCard.style.setProperty('display', 'none', 'important');
       });
 
       // Version selection change handler
@@ -1280,6 +1336,7 @@
         emptyStatePanel.style.display = 'none';
         testCasesPanel.classList.remove('d-none');
         dashboardStatsSection.style.display = 'block'; // Sürüm tıklandığında istatistik panelini göster
+        testScenariosCard.style.setProperty('display', 'flex', 'important');
 
         await loadTestCases();
       }
@@ -1411,6 +1468,11 @@
         Object.keys(grouped).sort().forEach(suiteName => {
           const cases = grouped[suiteName];
           const passedCount = cases.filter(c => c.result === 'Pass').length;
+          const pokCount = cases.filter(c => c.result === 'Partial OK (POK)').length;
+          const failedCount = cases.filter(c => c.result === 'Fail').length;
+          const blockedCount = cases.filter(c => c.result === 'Blocked').length;
+          const retestCount = cases.filter(c => c.result === 'Retest').length;
+          const notRunCount = cases.filter(c => !c.result || c.result === 'Not Run').length;
           const totalCount = cases.length;
 
           // Check if this suite contains the active case in drawer or was manually expanded
@@ -1429,15 +1491,19 @@
           const header = document.createElement('div');
           header.className = 'suite-folder-header';
           header.innerHTML = `
-            <div class="suite-folder-title">
-              <i class="fa-solid fa-folder-open suite-folder-icon"></i>
-              <span class="text-truncate" style="font-weight:700;">${escapeHtml(suiteName)}</span>
+            <div class="suite-folder-title" style="flex-grow:1; min-width:0;">
+              <i class="fa-solid fa-folder-open suite-folder-icon" style="flex-shrink:0;"></i>
+              <span class="text-truncate" style="font-weight:700;" title="${escapeHtml(suiteName)}">${escapeHtml(suiteName)}</span>
             </div>
-            <div class="d-flex align-items-center gap-2">
-              <span class="badge bg-secondary text-white" style="font-size:0.65rem; text-transform:none; font-weight:600; padding:2px 6px;">
-                ${passedCount}/${totalCount}
-              </span>
-              <i class="fa-solid fa-chevron-down suite-folder-chevron"></i>
+            <div class="d-flex align-items-center gap-1 ms-2 flex-wrap" style="flex-shrink:0;">
+              <span class="badge" style="background:#4b5563; color:#fff; font-size:0.62rem; padding:2px 5px;" title="Toplam">${totalCount}</span>
+              <span class="badge" style="background:#10b981; color:#fff; font-size:0.62rem; padding:2px 5px;" title="Pass">${passedCount}</span>
+              <span class="badge" style="background:#f59e0b; color:#000; font-size:0.62rem; padding:2px 5px; font-weight:700;" title="Partial OK">${pokCount}</span>
+              <span class="badge" style="background:#ef4444; color:#fff; font-size:0.62rem; padding:2px 5px;" title="Failed">${failedCount}</span>
+              <span class="badge" style="background:#8b5cf6; color:#fff; font-size:0.62rem; padding:2px 5px;" title="Blocked">${blockedCount}</span>
+              <span class="badge" style="background:#3b82f6; color:#fff; font-size:0.62rem; padding:2px 5px;" title="Retest">${retestCount}</span>
+              <span class="badge" style="background:#6b7280; color:#fff; font-size:0.62rem; padding:2px 5px;" title="Not Run">${notRunCount}</span>
+              <i class="fa-solid fa-chevron-down suite-folder-chevron ms-1"></i>
             </div>
           `;
 
@@ -1455,6 +1521,16 @@
             // Add active highlight if selected
             if (activeCaseInDrawer && activeCaseInDrawer.testId === c.testId) {
               item.classList.add('is-active');
+            }
+
+            // Add status-based card background class
+            if (c.result && c.result !== 'Not Run') {
+              const resClass = c.result === 'Pass' ? 'result-pass' :
+                               c.result === 'Partial OK (POK)' ? 'result-pok' :
+                               c.result === 'Fail' ? 'result-fail' :
+                               c.result === 'Blocked' ? 'result-blocked' :
+                               c.result === 'Retest' ? 'result-retest' : '';
+              if (resClass) item.classList.add(resClass);
             }
 
             // Status pill styling
