@@ -896,15 +896,20 @@
   }
 
   // Open/Close Device Management Modal
+  const modelRenameSection = document.getElementById('modelRenameSection');
+  const inputUpdateModelName = document.getElementById('inputUpdateModelName');
+  const btnUpdateModelName = document.getElementById('btnUpdateModelName');
+
   btnManageDevices.addEventListener('click', () => {
     deviceMgmtModal.style.display = 'flex';
     inputNewModelName.value = '';
+    modelRenameSection.style.display = 'none';
     mgmtFirmwareSection.style.display = 'none';
   });
 
   function closeDeviceMgmtModal() {
     deviceMgmtModal.style.display = 'none';
-    // Refresh dropdowns in Save Modal to reflect additions/removals
+    // Refresh dropdowns in Save Modal to reflect additions/removals/updates
     loadModelsIntoSelects(selectModel.value, selectFirmware.value);
   }
 
@@ -937,18 +942,43 @@
     }
   });
 
+  // Update Model Name
+  btnUpdateModelName.addEventListener('click', async () => {
+    const oldName = selectMgmtModel.value;
+    const newName = inputUpdateModelName.value.trim();
+    if (!oldName) return;
+    if (!newName) {
+      alert("Lütfen geçerli bir model ismi girin.");
+      return;
+    }
+    btnUpdateModelName.disabled = true;
+    try {
+      await updateModelName(oldName, newName);
+      await loadModelsIntoSelects();
+      selectMgmtModel.value = newName;
+      selectMgmtModel.dispatchEvent(new Event('change'));
+      showToast("📝 Model ismi güncellendi.");
+    } catch (err) {
+      alert(err.message || "Model güncellenirken hata oluştu.");
+    } finally {
+      btnUpdateModelName.disabled = false;
+    }
+  });
+
   // When Model selection changes in management modal
   selectMgmtModel.addEventListener('change', () => {
     const modelId = selectMgmtModel.value;
     const model = cachedModels.find(m => m.id === modelId);
     if (model) {
+      modelRenameSection.style.display = 'block';
+      inputUpdateModelName.value = modelId;
       mgmtFirmwareSection.style.display = 'block';
       inputNewFirmwareName.value = '';
       renderMgmtFirmwareList(model);
     }
   });
 
-  // Render firmware list in management modal with delete buttons
+  // Render firmware list in management modal with edit and delete buttons
   function renderMgmtFirmwareList(model) {
     mgmtFirmwareList.innerHTML = '';
     if (!model.firmwares || model.firmwares.length === 0) {
@@ -969,12 +999,49 @@
       const span = document.createElement('span');
       span.textContent = fw;
       
+      const actionsDiv = document.createElement('div');
+      actionsDiv.style.display = 'flex';
+      actionsDiv.style.gap = '8px';
+
+      // Rename button
+      const btnRename = document.createElement('button');
+      btnRename.style.border = 'none';
+      btnRename.style.background = 'none';
+      btnRename.style.color = 'var(--accent-dark)';
+      btnRename.style.cursor = 'pointer';
+      btnRename.style.padding = '4px';
+      btnRename.title = 'Yazılım Sürümünü Düzenle';
+      btnRename.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+
+      btnRename.onclick = async () => {
+        const newFwName = prompt("Yazılım sürümü ismini güncelleyin:", fw);
+        if (newFwName === null) return;
+        const cleanedNew = newFwName.trim();
+        if (!cleanedNew) {
+          alert("Yazılım sürümü ismi boş olamaz.");
+          return;
+        }
+        if (cleanedNew === fw) return;
+        
+        try {
+          await updateFirmwareName(model.id, fw, cleanedNew);
+          cachedModels = await getAllModels();
+          const updatedModel = cachedModels.find(m => m.id === model.id);
+          renderMgmtFirmwareList(updatedModel);
+          showToast("📝 Yazılım ismi güncellendi.");
+        } catch (err) {
+          alert(err.message || "Yazılım güncellenirken hata oluştu.");
+        }
+      };
+
+      // Delete button
       const btnDel = document.createElement('button');
       btnDel.style.border = 'none';
       btnDel.style.background = 'none';
       btnDel.style.color = 'var(--error-text)';
       btnDel.style.cursor = 'pointer';
       btnDel.style.padding = '4px';
+      btnDel.title = 'Yazılım Sürümünü Sil';
       btnDel.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
       
       btnDel.onclick = async () => {
@@ -992,7 +1059,9 @@
       };
 
       li.appendChild(span);
-      li.appendChild(btnDel);
+      actionsDiv.appendChild(btnRename);
+      actionsDiv.appendChild(btnDel);
+      li.appendChild(actionsDiv);
       mgmtFirmwareList.appendChild(li);
     });
   }

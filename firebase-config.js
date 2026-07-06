@@ -23,29 +23,50 @@ function isTPLinkEmail(email) {
   return /@tp-link\.[a-zA-Z0-9.-]+$/i.test(email);
 }
 
-// ===== Session Timeout (Inactivity Tracker for 5 mins) =====
-let inactivityTimeout = null;
-
-function resetInactivityTimer() {
-  if (inactivityTimeout) clearTimeout(inactivityTimeout);
-  inactivityTimeout = setTimeout(logoutDueToInactivity, 5 * 60 * 1000); // 5 minutes
+// ===== Session Timeout (Inactivity Tracker for 5 mins - LocalStorage persisted) =====
+function getStoredLastActivity() {
+  return parseInt(localStorage.getItem('lastActivity') || '0', 10);
 }
 
-function logoutDueToInactivity() {
-  if (auth.currentUser) {
-    auth.signOut().then(() => {
-      window.location.href = 'login.html?error=timeout';
-    });
+function updateLastActivity() {
+  localStorage.setItem('lastActivity', Date.now().toString());
+}
+
+function checkSessionTimeout() {
+  if (window.location.pathname.endsWith('login.html')) return;
+  
+  const lastActivity = getStoredLastActivity();
+  const now = Date.now();
+  
+  // If user is logged in and last activity is older than 5 minutes, force logout
+  if (lastActivity && (now - lastActivity) > 5 * 60 * 1000) {
+    localStorage.removeItem('lastActivity');
+    if (auth.currentUser) {
+      auth.signOut().then(() => {
+        window.location.href = 'login.html?error=timeout';
+      });
+    }
   }
 }
 
+// Check session timeout immediately on load
+checkSessionTimeout();
+
+// Check periodically every 5 seconds
+setInterval(checkSessionTimeout, 5000);
+
 // Only track activity if not on login page
 if (!window.location.pathname.endsWith('login.html')) {
+  // Update last activity immediately on load
+  updateLastActivity();
+  
   const activityEvents = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll', 'click'];
   activityEvents.forEach(evt => {
-    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+    document.addEventListener(evt, () => {
+      updateLastActivity();
+      checkSessionTimeout();
+    }, { passive: true });
   });
-  resetInactivityTimer();
 }
 
 // Collection name
@@ -267,4 +288,84 @@ async function deleteFirmwareFromModel(modelName, firmware) {
   await ref.update({
     firmwares: firebase.firestore.FieldValue.arrayRemove(firmware)
   });
+}
+
+/**
+ * Updates a model's name in Firestore, copying existing firmwares and deleting the old record.
+ * Also updates any saved test results referencing the old model name.
+ * @param {string} oldName 
+ * @param {string} newName 
+ */
+async function updateModelName(oldName, newName) {
+  const cleanedOld = oldName.trim();
+  const cleanedNew = newName.trim();
+  if (!cleanedOld || !cleanedNew) throw new Error("Model isimleri boş olamaz.");
+  if (cleanedOld === cleanedNew) return;
+
+  const oldRef = db.collection(MODELS_COLLECTION).doc(cleanedOld);
+  const newRef = db.collection(MODELS_COLLECTION).doc(cleanedNew);
+
+  const newDoc = await newRef.get();
+  if (newDoc.exists) {
+    throw new Error("Bu model zaten tanımlı.");
+  }
+
+  const oldDoc = await oldRef.get();
+  if (!oldDoc.exists) {
+    throw new Error("Güncellenecek model bulunamadı.");
+  }
+
+  const data = oldDoc.data();
+  // Create new model doc
+  await newRef.set(data);
+  // Delete old model doc
+  await oldRef.delete();
+
+  // Update test results cascadingly
+  const resultsSnapshot = await db.collection(COLLECTION_NAME).where('model', '==', cleanedOld).get();
+  if (!resultsSnapshot.empty) {
+    const batch = db.batch();
+    resultsSnapshot.docs.forEach(doc => {
+      batch.update(doc.ref, { model: cleanedNew });
+    });
+    await batch.commit();
+  }
+}
+
+/**
+ * Renames a firmware version inside a model.
+ * Also updates any saved test results referencing the old firmware version for this model.
+ * @param {string} modelName 
+ * @param {string} oldFirmware 
+ * @param {string} newFirmware 
+ */
+async function updateFirmwareName(modelName, oldFirmware, newFirmware) {
+  const cleanedOld = oldFirmware.trim();
+  const cleanedNew = newFirmware.trim();
+  if (!cleanedOld || !cleanedNew) throw new Error("Yazılım sürümü isimleri boş olamaz.");
+  if (cleanedOld === cleanedNew) return;
+
+  const ref = db.collection(MODELS_COLLECTION).doc(modelName);
+  const doc = await ref.get();
+  if (!doc.exists) throw new Error("Model bulunamadı.");
+  
+  const firmwares = doc.data().firmwares || [];
+  const idx = firmwares.indexOf(cleanedOld);
+  if (idx === -1) throw new Error("Yazılım sürümü bulunamadı.");
+
+  firmwares[idx] = cleanedNew;
+  await ref.update({ firmwares });
+
+  // Update test results cascadingly
+  const resultsSnapshot = await db.collection(COLLECTION_NAME)
+    .where('model', '==', modelName)
+    .where('firmware', '==', cleanedOld)
+    .get();
+  if (!resultsSnapshot.empty) {
+    const batch = db.batch();
+    resultsSnapshot.docs.forEach(d => {
+      batch.update(d.ref, { firmware: cleanedNew });
+    });
+    await batch.commit();
+  }
 }

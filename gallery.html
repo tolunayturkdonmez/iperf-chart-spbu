@@ -637,10 +637,6 @@
 
     <div class="gallery-actions" id="galleryActions" style="display:none;">
       <span class="gallery-count" id="galleryCount"></span>
-      <button class="btn-clear-gallery" id="btnClearGallery">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.75 3.5h10.5M4.67 3.5V2.33a1.17 1.17 0 011.16-1.16h2.34a1.17 1.17 0 011.16 1.16V3.5m1.75 0v8.17a1.17 1.17 0 01-1.16 1.16H4.08a1.17 1.17 0 01-1.16-1.16V3.5h8.16z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Tümünü Sil
-      </button>
     </div>
 
     <div id="galleryContent"></div>
@@ -671,13 +667,21 @@
           </div>
         </div>
 
-        <!-- Section 2: Manage Firmwares -->
+        <!-- Section 2: Manage Firmwares & Rename Models -->
         <div class="form-group">
-          <label for="selectMgmtModel" style="font-weight:700;">Yazılım Sürümlerini Yönet</label>
+          <label for="selectMgmtModel" style="font-weight:700;">Model & Yazılım Yönetimi</label>
           <select id="selectMgmtModel" class="filter-select" style="margin-top:6px; margin-bottom:12px;">
             <option value="" disabled selected>Model seçin</option>
           </select>
           
+          <div id="modelRenameSection" style="display:none; margin-bottom:16px; border-bottom: 1px dashed var(--card-border); padding-bottom: 16px;">
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Model Adını Güncelle</label>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <input type="text" id="inputUpdateModelName" placeholder="Yeni model adı">
+              <button class="btn-modal-save-only" id="btnUpdateModelName" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Modeli Güncelle</button>
+            </div>
+          </div>
+
           <div id="mgmtFirmwareSection" style="display:none;">
             <div style="display:flex; gap:8px; margin-bottom:12px;">
               <input type="text" id="inputNewFirmwareName" placeholder="Örn: 1.0.5 Build 20240415">
@@ -1305,9 +1309,14 @@
     }
 
     // ===== Device Mgmt Modal Controls (inline) =====
+    const modelRenameSection = document.getElementById('modelRenameSection');
+    const inputUpdateModelName = document.getElementById('inputUpdateModelName');
+    const btnUpdateModelName = document.getElementById('btnUpdateModelName');
+
     btnManageDevices.addEventListener('click', () => {
       deviceMgmtModal.style.display = 'flex';
       inputNewModelName.value = '';
+      modelRenameSection.style.display = 'none';
       mgmtFirmwareSection.style.display = 'none';
     });
 
@@ -1345,18 +1354,43 @@
       }
     });
 
+    // Update Model Name
+    btnUpdateModelName.addEventListener('click', async () => {
+      const oldName = selectMgmtModel.value;
+      const newName = inputUpdateModelName.value.trim();
+      if (!oldName) return;
+      if (!newName) {
+        alert("Lütfen geçerli bir model ismi girin.");
+        return;
+      }
+      btnUpdateModelName.disabled = true;
+      try {
+        await updateModelName(oldName, newName);
+        await loadModels();
+        selectMgmtModel.value = newName;
+        selectMgmtModel.dispatchEvent(new Event('change'));
+        showToast("📝 Model ismi güncellendi.", "success");
+      } catch (err) {
+        alert(err.message || "Model güncellenirken hata oluştu.");
+      } finally {
+        btnUpdateModelName.disabled = false;
+      }
+    });
+
     // When Model selection changes in management modal
     selectMgmtModel.addEventListener('change', () => {
       const modelId = selectMgmtModel.value;
       const model = cachedModels.find(m => m.id === modelId);
       if (model) {
+        modelRenameSection.style.display = 'block';
+        inputUpdateModelName.value = modelId;
         mgmtFirmwareSection.style.display = 'block';
         inputNewFirmwareName.value = '';
         renderMgmtFirmwareList(model);
       }
     });
 
-    // Render firmware list in management modal with delete buttons
+    // Render firmware list in management modal with edit and delete buttons
     function renderMgmtFirmwareList(model) {
       mgmtFirmwareList.innerHTML = '';
       if (!model.firmwares || model.firmwares.length === 0) {
@@ -1377,12 +1411,49 @@
         const span = document.createElement('span');
         span.textContent = fw;
         
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.display = 'flex';
+        actionsDiv.style.gap = '8px';
+
+        // Rename button
+        const btnRename = document.createElement('button');
+        btnRename.style.border = 'none';
+        btnRename.style.background = 'none';
+        btnRename.style.color = 'var(--accent-dark)';
+        btnRename.style.cursor = 'pointer';
+        btnRename.style.padding = '4px';
+        btnRename.title = 'Yazılım Sürümünü Düzenle';
+        btnRename.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+
+        btnRename.onclick = async () => {
+          const newFwName = prompt("Yazılım sürümü ismini güncelleyin:", fw);
+          if (newFwName === null) return;
+          const cleanedNew = newFwName.trim();
+          if (!cleanedNew) {
+            alert("Yazılım sürümü ismi boş olamaz.");
+            return;
+          }
+          if (cleanedNew === fw) return;
+          
+          try {
+            await updateFirmwareName(model.id, fw, cleanedNew);
+            cachedModels = await getAllModels();
+            const updatedModel = cachedModels.find(m => m.id === model.id);
+            renderMgmtFirmwareList(updatedModel);
+            showToast("📝 Yazılım ismi güncellendi.", "success");
+          } catch (err) {
+            alert(err.message || "Yazılım güncellenirken hata oluştu.");
+          }
+        };
+
+        // Delete button
         const btnDel = document.createElement('button');
         btnDel.style.border = 'none';
         btnDel.style.background = 'none';
         btnDel.style.color = 'var(--error-text)';
         btnDel.style.cursor = 'pointer';
         btnDel.style.padding = '4px';
+        btnDel.title = 'Yazılım Sürümünü Sil';
         btnDel.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
         
         btnDel.onclick = async () => {
@@ -1399,7 +1470,9 @@
         };
 
         li.appendChild(span);
-        li.appendChild(btnDel);
+        actionsDiv.appendChild(btnRename);
+        actionsDiv.appendChild(btnDel);
+        li.appendChild(actionsDiv);
         mgmtFirmwareList.appendChild(li);
       });
     }
@@ -1424,41 +1497,6 @@
         alert("Yazılım eklenirken hata oluştu.");
       } finally {
         btnAddFirmware.disabled = false;
-      }
-    });
-
-    // ===== Search =====
-    searchInput.addEventListener('input', () => {
-      searchClear.style.display = searchInput.value ? 'block' : 'none';
-      renderGallery();
-    });
-
-    searchClear.addEventListener('click', () => {
-      searchInput.value = '';
-      searchClear.style.display = 'none';
-      renderGallery();
-      searchInput.focus();
-    });
-
-    // ===== Clear All (Firebase) =====
-    btnClearGallery.addEventListener('click', async () => {
-      if (!confirm('Tüm kaydedilmiş test sonuçlarını silmek istediğinizden emin misiniz?')) return;
-
-      btnClearGallery.disabled = true;
-      btnClearGallery.textContent = 'Siliniyor…';
-
-      try {
-        await deleteAllTestResults();
-        searchInput.value = '';
-        searchClear.style.display = 'none';
-        showToast('✅ Tüm kayıtlar silindi', 'success');
-        loadGallery();
-      } catch (e) {
-        console.error('Toplu silme hatası:', e);
-        showToast('❌ Silme sırasında hata oluştu', 'error');
-      } finally {
-        btnClearGallery.disabled = false;
-        btnClearGallery.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.75 3.5h10.5M4.67 3.5V2.33a1.17 1.17 0 011.16-1.16h2.34a1.17 1.17 0 011.16 1.16V3.5m1.75 0v8.17a1.17 1.17 0 01-1.16 1.16H4.08a1.17 1.17 0 01-1.16-1.16V3.5h8.16z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Tümünü Sil';
       }
     });
 

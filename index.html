@@ -222,13 +222,21 @@
           </div>
         </div>
 
-        <!-- Section 2: Manage Firmwares -->
+        <!-- Section 2: Manage Firmwares & Rename Models -->
         <div class="form-group">
-          <label for="selectMgmtModel" style="font-weight:700;">Yazılım Sürümlerini Yönet</label>
+          <label for="selectMgmtModel" style="font-weight:700;">Model & Yazılım Yönetimi</label>
           <select id="selectMgmtModel" style="margin-top:6px; margin-bottom:12px;">
             <option value="" disabled selected>Model seçin</option>
           </select>
           
+          <div id="modelRenameSection" style="display:none; margin-bottom:16px; border-bottom: 1px dashed var(--card-border); padding-bottom: 16px;">
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Model Adını Güncelle</label>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <input type="text" id="inputUpdateModelName" placeholder="Yeni model adı">
+              <button class="btn-modal-save-only" id="btnUpdateModelName" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Modeli Güncelle</button>
+            </div>
+          </div>
+
           <div id="mgmtFirmwareSection" style="display:none;">
             <div style="display:flex; gap:8px; margin-bottom:12px;">
               <input type="text" id="inputNewFirmwareName" placeholder="Örn: 1.0.5 Build 20240415">
