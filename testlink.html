@@ -678,7 +678,7 @@
           <div id="importExcelSection" class="d-none"></div>
 
           <!-- Scrollable Accordion Container inside Sidebar -->
-          <div id="testSuitesAccordion" style="overflow-y:auto; flex-grow:1; max-height: 480px; padding-right:2px; font-size:0.8rem;">
+          <div id="testSuitesAccordion" class="accordion" style="overflow-y:auto; flex-grow:1; max-height: 480px; padding-right:2px; font-size:0.8rem;">
             <div class="p-3 text-center text-muted" style="font-size: 0.74rem;">Önce yazılım sürümü seçin.</div>
           </div>
         </div>
@@ -1050,11 +1050,6 @@
       const detPriority = document.getElementById('detPriority');
       const detCase = document.getElementById('detCase');
       const detDescriptionView = document.getElementById('detDescriptionView');
-      const detDescriptionEditForm = document.getElementById('detDescriptionEditForm');
-      const detDescriptionInput = document.getElementById('detDescriptionInput');
-      const btnCancelEditDesc = document.getElementById('btnCancelEditDesc');
-      const btnSaveEditDesc = document.getElementById('btnSaveEditDesc');
-      const btnEditDescription = document.getElementById('btnEditDescription');
       
       const detResult = document.getElementById('detResult');
       const detTester = document.getElementById('detTester');
@@ -1127,7 +1122,6 @@
           btnDeleteFirmware.classList.remove('d-none');
           btnUploadTemplateModal.classList.remove('d-none');
           attachmentUploadForm.style.display = 'flex';
-          btnEditDescription.classList.remove('d-none');
           
           detResult.removeAttribute('disabled');
           detComment.removeAttribute('disabled');
@@ -1137,7 +1131,6 @@
           btnDeleteFirmware.classList.add('d-none');
           btnUploadTemplateModal.classList.remove('d-none');
           attachmentUploadForm.style.display = 'flex';
-          btnEditDescription.classList.remove('d-none');
           
           detResult.removeAttribute('disabled');
           detComment.removeAttribute('disabled');
@@ -1147,7 +1140,6 @@
           btnDeleteFirmware.classList.add('d-none');
           btnUploadTemplateModal.classList.add('d-none');
           attachmentUploadForm.style.display = 'none';
-          btnEditDescription.classList.add('d-none');
           
           detResult.setAttribute('disabled', 'true');
           detComment.setAttribute('disabled', 'true');
@@ -1424,8 +1416,8 @@
             btn.classList.add('collapsed');
           }
           btn.type = 'button';
-          btn.dataset.bsToggle = 'collapse';
-          btn.dataset.bsTarget = `#${collapseId}`;
+          btn.setAttribute('data-bs-toggle', 'collapse');
+          btn.setAttribute('data-bs-target', `#${collapseId}`);
           btn.setAttribute('aria-expanded', containsActive ? 'true' : 'false');
           btn.setAttribute('aria-controls', collapseId);
 
@@ -1447,7 +1439,7 @@
             collapseDiv.classList.add('show');
           }
           collapseDiv.setAttribute('aria-labelledby', headerId);
-          collapseDiv.dataset.bsParent = '#testSuitesAccordion';
+          collapseDiv.setAttribute('data-bs-parent', '#testSuitesAccordion');
 
           const bodyDiv = document.createElement('div');
           bodyDiv.className = 'accordion-body';
@@ -1508,19 +1500,8 @@
         detPriority.textContent = c.priority || 'Medium';
         detCase.textContent = c.testCase;
         
-        // Reset Edit/View state for description
-        detDescriptionView.classList.remove('d-none');
-        detDescriptionEditForm.classList.add('d-none');
-        
-        if (activeRole === 'Admin' || activeRole === 'Tester') {
-          btnEditDescription.classList.remove('d-none');
-        } else {
-          btnEditDescription.classList.add('d-none');
-        }
-        
-        // Populate Description view & edit fields
+        // Populate Description view
         detDescriptionView.innerHTML = c.description ? formatDescriptionText(c.description) : '<span class="text-muted" style="font-style: italic;">Açıklama/prosedür tanımlanmamış.</span>';
-        detDescriptionInput.value = c.description || '';
         
         // Fill result inputs inside detail card
         detResult.value = c.result || 'Not Run';
@@ -1650,57 +1631,7 @@
         reader.readAsDataURL(file);
       });
 
-      // Toggle edit description state
-      btnEditDescription.addEventListener('click', () => {
-        detDescriptionView.classList.add('d-none');
-        btnEditDescription.classList.add('d-none');
-        detDescriptionEditForm.classList.remove('d-none');
-        detDescriptionInput.focus();
-      });
-
-      btnCancelEditDesc.addEventListener('click', () => {
-        detDescriptionView.classList.remove('d-none');
-        if (activeRole === 'Admin' || activeRole === 'Tester') {
-          btnEditDescription.classList.remove('d-none');
-        }
-        detDescriptionEditForm.classList.add('d-none');
-        detDescriptionInput.value = activeCaseInDrawer.description || '';
-      });
-
-      btnSaveEditDesc.addEventListener('click', async () => {
-        if (!activeCaseInDrawer || !activeFirmware) return;
-        const descVal = detDescriptionInput.value;
-        
-        btnSaveEditDesc.disabled = true;
-        btnSaveEditDesc.textContent = 'Kaydediliyor…';
-        try {
-          const category = getDeviceTypeForModel(activeFirmware.model);
-          const docId = `${category.replace(/\s+/g, '_')}_${activeCaseInDrawer.testId}`;
-          const ref = db.collection('testlink_templates').doc(docId);
-          await ref.set({ description: descVal }, { merge: true });
-          
-          activeCaseInDrawer.description = descVal;
-          // Update in local cases array
-          const localC = activeCases.find(c => c.testId === activeCaseInDrawer.testId);
-          if (localC) localC.description = descVal;
-
-          detDescriptionView.innerHTML = descVal ? formatDescriptionText(descVal) : '<span class="text-muted" style="font-style: italic;">Açıklama/prosedür tanımlanmamış.</span>';
-
-          showToast("📝 Açıklama başarıyla güncellendi.", "success");
-          
-          // Toggle back to view state
-          detDescriptionView.classList.remove('d-none');
-          if (activeRole === 'Admin' || activeRole === 'Tester') {
-            btnEditDescription.classList.remove('d-none');
-          }
-          detDescriptionEditForm.classList.add('d-none');
-        } catch (err) {
-          alert("Açıklama kaydedilemedi: " + err.message);
-        } finally {
-          btnSaveEditDesc.disabled = false;
-          btnSaveEditDesc.textContent = 'Kaydet';
-        }
-      });
+      // Description is read-only as requested
 
       // ===== Excel Template Upload & Seeding =====
       if (btnLoadDefaultCases) {
