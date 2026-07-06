@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPerf Throughput Analyzer — WiFi Test Grafiği</title>
+  <meta name="description" content="iPerf çıktısını yükleyin, WiFi throughput grafiğinizi anında oluşturun ve PNG olarak kaydedin.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <script>
+    document.write('<style>body { opacity: 0 !important; }</style>');
+  </script>
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-card card">
+      <div class="loading-spinner"></div>
+      <p class="loading-text" id="loadingText">Lütfen bekleyin, dosya işleniyor…</p>
+      <p class="loading-sub" id="loadingSub"></p>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <img src="tp-link-logo.png" alt="TP-Link Logo" class="tp-link-logo" id="tpLinkLogo">
+      </div>
+      <div class="header-text">
+        <h1>iPerf Throughput Analyzer</h1>
+        <p class="subtitle">WiFi throughput test sonuçlarınızı görselleştirin</p>
+      </div>
+    </header>
+
+    <!-- Input Section -->
+    <section class="input-section card" id="inputSection">
+      <div class="section-header">
+        <h2>
+          <span class="section-icon">📂</span>
+          iPerf Sonuç Dosyasını Yükleyin
+        </h2>
+        <p class="section-desc">iPerf test çıktınızı içeren <code>.txt</code> dosyasını seçin. Sadece <code>[SUM]</code> satırları işlenecektir.</p>
+      </div>
+
+      <!-- File Upload Area -->
+      <div class="file-upload-area" id="fileUploadArea">
+        <input type="file" id="fileInput" accept=".txt,.log,.text" hidden>
+        <div class="upload-icon">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <rect x="4" y="8" width="40" height="32" rx="4" stroke="#4fc1e9" stroke-width="2.5" fill="none"/>
+            <path d="M24 18v12M18 24l6-6 6 6" stroke="#4fc1e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="upload-text">Dosyanızı buraya sürükleyin veya <span class="upload-link">dosya seçin</span></p>
+        <p class="upload-hint">.txt veya .log formatı desteklenir</p>
+      </div>
+
+      <!-- File Info (shown after file is selected) -->
+      <div class="file-info" id="fileInfo" style="display:none;">
+        <div class="file-info-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#4fc1e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#4fc1e9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="file-info-details">
+          <span class="file-info-name" id="fileName">—</span>
+          <span class="file-info-size" id="fileSize">—</span>
+        </div>
+        <button class="btn-remove-file" id="btnRemoveFile" title="Dosyayı kaldır">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <button class="btn-primary" id="btnParse" disabled>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h14M10 3l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sonuçları Grafiğe Aktar
+      </button>
+    </section>
+
+    <!-- Error Message -->
+    <div class="error-message" id="errorMessage" style="display:none;">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v5M10 13.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="errorText"></span>
+    </div>
+
+    <!-- Stats Cards -->
+    <section class="stats-section" id="statsSection" style="display:none;">
+      <div class="stat-card card">
+        <span class="stat-label">Ortalama Throughput</span>
+        <span class="stat-value" id="statAvg">—</span>
+        <span class="stat-unit">Mbps</span>
+      </div>
+      <div class="stat-card card">
+        <span class="stat-label">Maksimum</span>
+        <span class="stat-value" id="statMax">—</span>
+        <span class="stat-unit">Mbps</span>
+      </div>
+      <div class="stat-card card">
+        <span class="stat-label">Minimum</span>
+        <span class="stat-value" id="statMin">—</span>
+        <span class="stat-unit">Mbps</span>
+      </div>
+      <div class="stat-card card">
+        <span class="stat-label">Süre</span>
+        <span class="stat-value" id="statCount">—</span>
+        <span class="stat-unit">Saniye</span>
+      </div>
+    </section>
+
+    <!-- Chart Section -->
+    <section class="chart-section card" id="chartSection" style="display:none;">
+      <div class="section-header">
+        <h2>
+          <span class="section-icon">📊</span>
+          Throughput Grafiği
+          <span class="badge">Mbps</span>
+        </h2>
+      </div>
+      <p class="zoom-hint">💡 Grafik üzerinde fare ile sürükleyerek bir bölgeyi yakınlaştırabilirsiniz.</p>
+      <div class="chart-container">
+        <canvas id="throughputChart"></canvas>
+      </div>
+      <div class="chart-actions">
+        <button class="btn-reset-zoom" id="btnResetZoom" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 1v6h6M17 17v-6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.6 6.6A7 7 0 003.5 3.5L1 7M2.4 11.4a7 7 0 0012.1 3.1L17 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Normal Görünüme Dön
+        </button>
+        <button class="btn-save" id="btnSave">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M17 13v3a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16v-3M10 3v10M6 9l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Grafiği Görsel Olarak Kaydet
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>iPerf Throughput Analyzer &middot; Tüm veriler tarayıcınızda işlenir, sunucuya gönderilmez.</p>
+    </footer>
+  </div>
+
+  <!-- Save Modal Overlay -->
+  <div class="modal-overlay" id="saveModal" style="display:none;">
+    <div class="modal card">
+      <div class="modal-header">
+        <h3>📥 Grafik Kaydetme Bilgileri</h3>
+        <button class="modal-close" id="modalClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Grafik görseline eklenecek cihaz bilgilerini seçin.</p>
+
+      <div class="modal-form">
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label for="selectModel">Model</label>
+            <button class="btn-text-link" id="btnManageDevices" style="font-size:0.75rem; border:none; background:none; color:var(--accent-dark); cursor:pointer; text-decoration:underline; font-weight:600; padding:0;">[Model/Yazılım Yönetimi]</button>
+          </div>
+          <select id="selectModel">
+            <option value="" disabled selected>Model seçin</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="selectFirmware">Yazılım Sürümü</label>
+          <select id="selectFirmware" disabled>
+            <option value="" disabled selected>Önce model seçin</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="selectBand">Band</label>
+            <select id="selectBand">
+              <option value="" disabled selected>Band seçin</option>
+              <option value="2.4GHz">2.4 GHz</option>
+              <option value="5GHz">5 GHz</option>
+              <option value="6GHz">6 GHz</option>
+              <option value="MLO">MLO</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="selectChannel">Kanal Bilgisi</label>
+            <select id="selectChannel" disabled>
+              <option value="" disabled selected>Önce band seçin</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="modalCancel">İptal</button>
+        <button class="btn-modal-save-only" id="modalSaveOnly">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 5.5V13a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 013 13V3a1.5 1.5 0 011.5-1.5H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 1.5l3 3M7.5 9l6-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Sonucu Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model & Yazılım Yönetimi Modali (White-toned overlay) -->
+  <div class="password-modal-overlay" id="deviceMgmtModal" style="display:none; z-index:1100;">
+    <div class="modal card" style="max-width: 480px; width: 100%;">
+      <div class="modal-header">
+        <h3>🛠️ Model & Yazılım Yönetimi</h3>
+        <button class="modal-close" id="deviceMgmtModalClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Sistemde kayıtlı cihaz modellerini ve yazılım sürümlerini yönetin.</p>
+
+      <div class="modal-form">
+        <!-- Section 1: Add Model -->
+        <div class="form-group" style="border-bottom: 1px solid var(--card-border); padding-bottom: 16px; margin-bottom: 16px;">
+          <label style="font-weight:700;">Yeni Model Tanımla</label>
+          <div style="display:flex; gap:8px; margin-top:6px;">
+            <input type="text" id="inputNewModelName" placeholder="Örn: Archer BE800">
+            <button class="btn-modal-save-only" id="btnAddModel" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Model Ekle</button>
+          </div>
+        </div>
+
+        <!-- Section 2: Manage Firmwares & Rename Models -->
+        <div class="form-group">
+          <label for="selectMgmtModel" style="font-weight:700;">Model & Yazılım Yönetimi</label>
+          <select id="selectMgmtModel" style="margin-top:6px; margin-bottom:12px;">
+            <option value="" disabled selected>Model seçin</option>
+          </select>
+          
+          <div id="modelRenameSection" style="display:none; margin-bottom:16px; border-bottom: 1px dashed var(--card-border); padding-bottom: 16px;">
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Model Adını Güncelle</label>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <input type="text" id="inputUpdateModelName" placeholder="Yeni model adı">
+              <button class="btn-modal-save-only" id="btnUpdateModelName" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Modeli Güncelle</button>
+            </div>
+          </div>
+
+          <div id="mgmtFirmwareSection" style="display:none;">
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+              <input type="text" id="inputNewFirmwareName" placeholder="Örn: 1.0.5 Build 20240415">
+              <button class="btn-modal-save-only" id="btnAddFirmware" style="padding:10px 16px; white-space:nowrap; border-radius:var(--radius-sm); font-size:0.8rem;">Yazılım Ekle</button>
+            </div>
+            
+            <label style="font-size:0.7rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Kayıtlı Sürümler</label>
+            <ul id="mgmtFirmwareList" style="list-style:none; padding:0; margin:6px 0 0 0; max-height:150px; overflow-y:auto; border:1px solid var(--card-border); border-radius:var(--radius-sm); background:#f8fafc;">
+              <!-- Yazılımlar buraya listelenecek -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--card-border); padding-top:16px;">
+        <button class="btn-modal-cancel" id="btnDeviceMgmtDone" style="width:100%;">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Gallery Button & Logout Button -->
+  <div class="fab-container">
+    <a href="index.html" class="fab-gallery" id="fabPortal" title="Anasayfa Portal" style="background:#1e293b; color:white;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      <span>Anasayfa</span>
+    </a>
+    <a href="gallery.html" class="fab-gallery" id="fabGallery" title="Kayıtlı Test Sonuçları">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M2 13l4-4 3 3 4-5 5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7.5" r="1.5" fill="currentColor"/></svg>
+      <span>Galeri</span>
+    </a>
+    <button class="fab-logout" id="btnLogout" title="Çıkış Yap">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      <span>Çıkış Yap</span>
+    </button>
+  </div>
+
+  <!-- Change Password Modal Overlay (White-toned) -->
+  <div class="password-modal-overlay" id="passwordModal" style="display:none;">
+    <div class="modal card">
+      <div class="modal-header">
+        <h3>🔒 Şifre Değiştir</h3>
+        <button class="modal-close" id="passwordModalClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Hesap güvenliğiniz için mevcut şifrenizi doğrulayarak yeni şifre belirleyin.</p>
+
+      <div class="modal-form">
+        <!-- Error Message inside Modal -->
+        <div class="error-message" id="passwordError" style="display:none; margin-bottom: 12px; padding: 10px 14px;">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v5M10 13.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span id="passwordErrorText"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="inputCurrentPassword">Mevcut Şifre</label>
+          <input type="password" id="inputCurrentPassword" placeholder="Mevcut şifrenizi girin">
+        </div>
+
+        <div class="form-group">
+          <label for="inputNewPassword">Yeni Şifre</label>
+          <input type="password" id="inputNewPassword" placeholder="En az 6 karakter">
+        </div>
+
+        <div class="form-group">
+          <label for="inputNewPasswordConfirm">Yeni Şifre Tekrar</label>
+          <input type="password" id="inputNewPasswordConfirm" placeholder="Yeni şifrenizi tekrar girin">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="passwordModalCancel">İptal</button>
+        <button class="btn-modal-save-only" id="passwordModalSave">Şifreyi Güncelle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimal Password Change Button -->
+  <button class="fab-password" id="btnChangePassword" title="Şifre Değiştir">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    <span>Şifre Değiştir</span>
+  </button>
+
+  <!-- Subtle Logged In User Text (Bottom Right) -->
+  <span class="user-status-text" id="userStatusText"></span>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
+  <!-- Prevent UI flashing & handle page transitions -->
+  <script>
+    auth.onAuthStateChanged((user) => {
+      if (!user || !isTPLinkEmail(user.email)) {
+        window.location.href = 'login.html?redirected=true';
+      } else {
+        const userStatusText = document.getElementById('userStatusText');
+        if (userStatusText) {
+          userStatusText.textContent = `${user.email} hesabıyla oturum açıldı.`;
+        }
+        
+        // Trigger smooth fade-in after authentication resolves
+        const style = document.createElement('style');
+        style.innerHTML = 'body { opacity: 1 !important; }';
+        document.head.appendChild(style);
+      }
+    });
+
+    // Smooth page transition for gallery link
+    document.getElementById('fabGallery').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        window.location.href = 'gallery.html';
+      }, 250);
+    });
+
+    document.getElementById('fabPortal').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 250);
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.style.opacity = '0';
+      auth.signOut().then(() => {
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 250);
+      });
+    });
+
+    // ===== Password Modal Controls =====
+    const passwordModal = document.getElementById('passwordModal');
+    const btnChangePassword = document.getElementById('btnChangePassword');
+    const passwordModalClose = document.getElementById('passwordModalClose');
+    const passwordModalCancel = document.getElementById('passwordModalCancel');
+    const passwordModalSave = document.getElementById('passwordModalSave');
+    const passwordError = document.getElementById('passwordError');
+    const passwordErrorText = document.getElementById('passwordErrorText');
+
+    const inputCurrentPassword = document.getElementById('inputCurrentPassword');
+    const inputNewPassword = document.getElementById('inputNewPassword');
+    const inputNewPasswordConfirm = document.getElementById('inputNewPasswordConfirm');
+
+    function openPasswordModal() {
+      passwordModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      passwordError.style.display = 'none';
+      inputCurrentPassword.value = '';
+      inputNewPassword.value = '';
+      inputNewPasswordConfirm.value = '';
+    }
+
+    function closePasswordModal() {
+      passwordModal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    btnChangePassword.addEventListener('click', openPasswordModal);
+    passwordModalClose.addEventListener('click', closePasswordModal);
+    passwordModalCancel.addEventListener('click', closePasswordModal);
+
+    passwordModal.addEventListener('click', (e) => {
+      if (e.target === passwordModal) closePasswordModal();
+    });
+
+    passwordModalSave.addEventListener('click', async () => {
+      const currentPwd = inputCurrentPassword.value;
+      const newPwd = inputNewPassword.value;
+      const newPwdConfirm = inputNewPasswordConfirm.value;
+
+      if (!currentPwd || !newPwd || !newPwdConfirm) {
+        showPasswordError('Lütfen tüm alanları doldurun.');
+        return;
+      }
+
+      if (newPwd.length < 6) {
+        showPasswordError('Yeni şifre en az 6 karakter olmalıdır.');
+        return;
+      }
+
+      if (newPwd !== newPwdConfirm) {
+        showPasswordError('Yeni şifreler eşleşmiyor.');
+        return;
+      }
+
+      passwordModalSave.disabled = true;
+      passwordModalSave.textContent = 'Güncelleniyor…';
+      passwordError.style.display = 'none';
+
+      try {
+        await changeUserPassword(currentPwd, newPwd);
+        closePasswordModal();
+        
+        // Show success toast (reusing the toast logic from app.js)
+        const toast = document.getElementById('toast');
+        if (toast) {
+          toast.textContent = '✅ Şifreniz başarıyla güncellendi.';
+          toast.className = 'toast toast-visible toast-success';
+          setTimeout(() => { toast.className = 'toast'; }, 2500);
+        }
+      } catch (err) {
+        console.error('Password update error:', err);
+        let msg = 'Şifre güncellenemedi. Mevcut şifreniz hatalı olabilir.';
+        if (err.code === 'auth/wrong-password') {
+          msg = 'Mevcut şifreniz hatalı.';
+        } else if (err.message) {
+          msg = err.message;
+        }
+        showPasswordError(msg);
+      } finally {
+        passwordModalSave.disabled = false;
+        passwordModalSave.textContent = 'Şifreyi Güncelle';
+      }
+    });
+
+    function showPasswordError(msg) {
+      passwordErrorText.textContent = msg;
+      passwordError.style.display = 'flex';
+      passwordError.style.animation = 'none';
+      void passwordError.offsetHeight;
+      passwordError.style.animation = 'shakeIn 0.4s ease';
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

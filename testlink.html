@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yazılım Test Yönetim Sayfası — Testlink</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 & Font Awesome 6 & DataTables -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+  
+  <!-- Custom Styling incorporating main style variables -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <script>
+    document.write('<style>body { opacity: 0 !important; }</style>');
+  </script>
+  
+  <style>
+    /* Dark Mode variables */
+    body.dark-mode {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+    }
+
+    body {
+      transition: background 0.3s ease, color 0.3s ease;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .testlink-container {
+      display: flex;
+      min-height: calc(100vh - 80px);
+      margin-top: 20px;
+      gap: 20px;
+    }
+
+    /* Left Sidebar Tree View */
+    .tree-sidebar {
+      width: 320px;
+      flex-shrink: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tree-sidebar.collapsed {
+      width: 0px;
+      overflow: hidden;
+      margin-right: -20px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .tree-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .tree-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tree-wrapper {
+      overflow-y: auto;
+      flex-grow: 1;
+      max-height: 550px;
+    }
+
+    .tree-list, .tree-list ul {
+      list-style: none;
+      padding-left: 16px;
+      margin: 0;
+    }
+
+    .tree-list {
+      padding-left: 0;
+    }
+
+    .tree-node {
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all var(--transition-fast);
+      color: var(--text-primary);
+    }
+
+    .tree-node:hover {
+      background: var(--bg-secondary);
+    }
+
+    .tree-node.active-node {
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+
+    .tree-toggle-icon {
+      font-size: 0.75rem;
+      transition: transform var(--transition-smooth);
+      color: var(--text-muted);
+    }
+
+    .tree-node.collapsed-node .tree-toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    /* Right Dashboard Panel */
+    .dashboard-panel {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    /* Summary Stats Grid */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    .summary-card {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      transition: transform var(--transition-bounce);
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+    }
+    .summary-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .summary-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+
+    .summary-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-top: 4px;
+      color: var(--text-primary);
+    }
+
+    /* Color indicators for status cards */
+    .border-pass { border-left: 4px solid var(--success-green); }
+    .border-pok { border-left: 4px solid #f59e0b; }
+    .border-fail { border-left: 4px solid var(--error-text); }
+    .border-blocked { border-left: 4px solid #a855f7; }
+    .border-notrun { border-left: 4px solid var(--text-muted); }
+    .border-retest { border-left: 4px solid #3b82f6; }
+
+    /* Custom Progress Bar Stack */
+    .progress-bar-stack {
+      height: 18px;
+      border-radius: 9px;
+      overflow: hidden;
+      display: flex;
+      background: #e2e8f0;
+      margin-top: 4px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .dark-mode .progress-bar-stack {
+      background: #334155;
+    }
+    .progress-segment {
+      height: 100%;
+      transition: width var(--transition-smooth) ease;
+    }
+    .bg-pass { background-color: var(--success-green); }
+    .bg-pok { background-color: #f59e0b; }
+    .bg-fail { background-color: var(--error-text); }
+    .bg-blocked { background-color: #a855f7; }
+    .bg-retest { background-color: #3b82f6; }
+    .bg-notrun { background-color: var(--text-muted); }
+
+    /* Collapsible Trigger button */
+    .btn-toggle-sidebar {
+      padding: 6px 12px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: var(--bg-secondary);
+    }
+
+    /* Result dropdown backgrounds */
+    .select-result {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+      text-transform: uppercase;
+    }
+
+    .select-result[data-status="Pass"] { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+    .select-result[data-status="Partial OK (POK)"] { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .select-result[data-status="Fail"] { background-color: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+    .select-result[data-status="Blocked"] { background-color: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
+    .select-result[data-status="Retest"] { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .select-result[data-status="Not Run"] { background-color: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+
+    /* Right drawer panel for details */
+    .detail-drawer {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      height: 100vh;
+      background: var(--card-bg);
+      border-left: 1px solid var(--card-border);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+      z-index: 2000;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      padding: 30px 24px;
+    }
+
+    .detail-drawer.open {
+      right: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+    }
+
+    .drawer-content {
+      overflow-y: auto;
+      flex-grow: 1;
+      font-size: 0.88rem;
+    }
+
+    .drawer-close {
+      cursor: pointer;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      font-size: 1.2rem;
+      padding: 4px;
+    }
+    .drawer-close:hover {
+      color: var(--error-text);
+    }
+
+    .detail-section {
+      margin-bottom: 16px;
+    }
+    .detail-label {
+      font-weight: 700;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .dt-row-link {
+      cursor: pointer;
+    }
+    .dt-row-link:hover td:first-child {
+      color: var(--accent-dark);
+      text-decoration: underline;
+    }
+
+    /* Dark Mode toggle icon styling */
+    .btn-theme-toggle {
+      background: none;
+      border: 1px solid var(--card-border);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-primary);
+      box-shadow: var(--card-shadow);
+      transition: all var(--transition-fast);
+    }
+    .btn-theme-toggle:hover {
+      background: var(--bg-secondary);
+    }
+
+    /* Role Select badge */
+    .role-select-badge {
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      padding: 6px 12px;
+      color: var(--text-primary);
+      outline: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+      .summary-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .testlink-container {
+        flex-direction: column;
+      }
+      .tree-sidebar {
+        width: 100%;
+        height: auto;
+      }
+      .tree-sidebar.collapsed {
+        display: none;
+      }
+    }
+
+    /* Listbox premium styling */
+    .list-group-item {
+      background: transparent;
+      color: var(--text-primary);
+      border-color: var(--card-border) !important;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+    .list-group-item:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    .list-group-item.active {
+      background: var(--accent-gradient) !important;
+      border-color: var(--accent-dark) !important;
+      color: #ffffff !important;
+      font-weight: 600;
+    }
+    .list-group-item.active .badge {
+      background: #ffffff !important;
+      color: var(--accent-dark) !important;
+    }
+    body.dark-mode .list-group-item {
+      color: var(--text-primary);
+    }
+    body.dark-mode .list-group-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    body.dark-mode .list-group-item.active {
+      color: #ffffff !important;
+    }
+
+    /* Collapsible Accordion & Test Case Item Premium Styling */
+    .accordion-item {
+      border: 1px solid var(--card-border) !important;
+      background: var(--card-bg) !important;
+      margin-bottom: 12px;
+      border-radius: var(--radius-md) !important;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .accordion-button {
+      font-weight: 700;
+      font-size: 0.92rem;
+      background: var(--bg-secondary) !important;
+      color: var(--text-primary) !important;
+      border: none !important;
+      padding: 16px 20px;
+    }
+    .accordion-button:not(.collapsed) {
+      background: var(--accent-light) !important;
+      color: var(--accent-dark) !important;
+      box-shadow: none !important;
+    }
+    .accordion-button::after {
+      filter: grayscale(1) invert(var(--dark-mode-invert, 0));
+    }
+    body.dark-mode .accordion-button::after {
+      filter: invert(1);
+    }
+    .accordion-body {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Make page layout fluid to utilize full width */
+    .app-container {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 20px 40px !important;
+    }
+
+    #testSuitesAccordion {
+      max-height: calc(100vh - 260px) !important; /* Dynamically use full vertical space */
+    }
+
+    .test-item {
+      padding: 6px 10px;
+      margin-bottom: 4px;
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--text-muted);
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.78rem;
+      transition: all var(--transition-fast);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      white-space: normal; /* allow wrapping */
+      word-break: break-word; /* wrap long words */
+    }
+    .test-item:hover {
+      transform: translateX(4px);
+      background: var(--card-border);
+      color: var(--text-primary);
+    }
+    .test-item.active-test-item {
+      border: 2px solid var(--accent-primary) !important;
+      box-shadow: 0 0 8px rgba(79, 193, 233, 0.4);
+      transform: scale(1.01) translateX(4px);
+    }
+
+    /* Result Color Coding (Soft backgrounds with left border indicators) */
+    .test-item-pass {
+      background: rgba(16, 185, 129, 0.08) !important;
+      border-left-color: var(--success-green) !important;
+      color: #047857 !important;
+    }
+    body.dark-mode .test-item-pass {
+      background: rgba(16, 185, 129, 0.16) !important;
+      color: #34d399 !important;
+    }
+
+    .test-item-pok {
+      background: rgba(245, 158, 11, 0.08) !important;
+      border-left-color: #f59e0b !important;
+      color: #b45309 !important;
+    }
+    body.dark-mode .test-item-pok {
+      background: rgba(245, 158, 11, 0.16) !important;
+      color: #fbbf24 !important;
+    }
+
+    .test-item-fail {
+      background: rgba(220, 38, 38, 0.08) !important;
+      border-left-color: var(--error-text) !important;
+      color: #b91c1c !important;
+    }
+    body.dark-mode .test-item-fail {
+      background: rgba(220, 38, 38, 0.16) !important;
+      color: #f87171 !important;
+    }
+
+    .test-item-blocked {
+      background: rgba(168, 85, 247, 0.08) !important;
+      border-left-color: #a855f7 !important;
+      color: #6d28d9 !important;
+    }
+    body.dark-mode .test-item-blocked {
+      background: rgba(168, 85, 247, 0.16) !important;
+      color: #c084fc !important;
+    }
+
+    .test-item-retest {
+      background: rgba(59, 130, 246, 0.08) !important;
+      border-left-color: #3b82f6 !important;
+      color: #1d4ed8 !important;
+    }
+    body.dark-mode .test-item-retest {
+      background: rgba(59, 130, 246, 0.16) !important;
+      color: #60a5fa !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container" style="max-width: 1200px; padding-top: 30px;">
+    <!-- Top Header -->
+    <header class="app-header mb-4" style="flex-direction: row; justify-content: space-between; text-align: left; align-items: center; gap: 0;">
+      <div class="d-flex align-items: center; gap: 14px;">
+        <img src="tp-link-logo.png" alt="TP-Link Logo" class="tp-link-logo" style="height: 48px;">
+        <div class="header-text align-items-start">
+          <h1 style="font-size: 1.45rem; margin: 0;">Yazılım Test Yönetim Sayfası</h1>
+          <p class="subtitle" style="margin: 0;">TestLink tabanlı sürüm ve test takibi</p>
+        </div>
+      </div>
+      
+      <!-- Top controls -->
+      <div class="d-flex align-items-center gap-3">
+        <!-- Role Switcher -->
+        <div class="d-flex align-items-center gap-2">
+          <span style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Mod:</span>
+          <select id="roleSelect" class="role-select-badge">
+            <option value="Admin">Admin (Yönetici)</option>
+            <option value="Tester" selected>Tester (Test Mühendisi)</option>
+            <option value="Viewer">Viewer (İzleyici)</option>
+          </select>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <button class="btn-theme-toggle" id="btnThemeToggle" title="Temayı Değiştir">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Home Button -->
+        <a href="index.html" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" id="btnHome" style="height: 38px; border-radius: var(--radius-sm); font-weight:600; padding: 0 14px;">
+          <i class="fa-solid fa-house"></i> Portal
+        </a>
+      </div>
+    </header>
+
+    <!-- Dashboard Stats Wrapper (Hidden by default, shown when firmware version is clicked) -->
+    <div id="dashboardStatsSection" style="display:none;">
+      <!-- Global Progress & Info Section -->
+      <section class="card mb-4 p-3" id="globalProgressSection" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-secondary);">
+            İlerleme Durumu: <span id="progressPercentText" class="text-primary">0%</span>
+          </div>
+          <div class="d-flex flex-wrap gap-3 font-monospace" style="font-size: 0.8rem; color: var(--text-secondary);">
+            <span>Toplam: <strong id="progTotal">0</strong></span>
+            <span>Pass: <strong class="text-success" id="progPass">0</strong></span>
+            <span>POK: <strong style="color:#d97706" id="progPok">0</strong></span>
+            <span>Fail: <strong class="text-danger" id="progFail">0</strong></span>
+            <span>Blocked: <strong style="color:#7c3aed" id="progBlocked">0</strong></span>
+            <span>Retest: <strong class="text-primary" id="progRetest">0</strong></span>
+            <span>Not Run: <strong id="progNotRun">0</strong></span>
+          </div>
+        </div>
+        <div class="progress-bar-stack" id="progressBarStack">
+          <!-- Dynamic segments will be rendered here -->
+        </div>
+      </section>
+
+      <!-- Top Dashboard Summary Cards -->
+      <section class="summary-grid mb-4">
+        <div class="summary-card border-notrun">
+          <div class="summary-label">Toplam Test</div>
+          <div class="summary-val" id="cardTotal">0</div>
+        </div>
+        <div class="summary-card border-pass">
+          <div class="summary-label">Passed (Başarılı)</div>
+          <div class="summary-val text-success" id="cardPassed">0</div>
+        </div>
+        <div class="summary-card border-pok">
+          <div class="summary-label">Partial OK (POK)</div>
+          <div class="summary-val" style="color:#d97706" id="cardPok">0</div>
+        </div>
+        <div class="summary-card border-fail">
+          <div class="summary-label">Failed (Hatalı)</div>
+          <div class="summary-val text-danger" id="cardFailed">0</div>
+        </div>
+        <div class="summary-card border-blocked">
+          <div class="summary-label">Blocked (Engelli)</div>
+          <div class="summary-val" style="color:#7c3aed" id="cardBlocked">0</div>
+        </div>
+        <div class="summary-card border-retest">
+          <div class="summary-label">Completion % (Tamamlanma)</div>
+          <div class="summary-val text-primary" id="cardPercent">0%</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Main Container Tree & Right Pane -->
+    <div class="testlink-container">
+      
+      <!-- Sol Panel: Model & Sürüm Seçim Dikey Dropdownları ve Test Senaryo Listesi -->
+      <aside class="tree-sidebar" id="treeSidebar">
+        <!-- 1. Cihaz Modeli & Sürüm Seçim Kartı (Basic Dropdowns) -->
+        <div class="card p-3 mb-3" style="gap: 12px; background: var(--card-bg);">
+          <div class="form-group">
+            <label class="fw-bold text-secondary mb-1" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">Cihaz Modeli</label>
+            <select id="modelSelect" class="form-select form-select-sm" style="font-size:0.82rem; border-radius: var(--radius-sm);">
+              <option value="" disabled selected>Model seçin</option>
+              <optgroup label="HGW Cihazları">
+                <option value="Archer C5v">Archer C5v</option>
+                <option value="EX20v">EX20v</option>
+                <option value="EX520v">EX520v</option>
+              </optgroup>
+              <optgroup label="DSL Cihazları">
+                <option value="VC220-G3u">VC220-G3u</option>
+                <option value="VX231">VX231</option>
+              </optgroup>
+              <optgroup label="Mesh Cihazları">
+                <option value="HX520">HX520</option>
+              </optgroup>
+              <optgroup label="5G FWA Cihazları">
+                <option value="NX540">NX540</option>
+              </optgroup>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="fw-bold text-secondary mb-1" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">Yazılım Sürümü</label>
+            <select id="versionSelect" class="form-select form-select-sm" style="font-size:0.82rem; border-radius: var(--radius-sm);" disabled>
+              <option value="">Önce Cihaz Seçin</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 2. Test Senaryoları Akordeon Listesi (Sol Sidebar Altında) -->
+        <div class="card p-3" style="flex-grow:1; display:flex; flex-direction:column; overflow:hidden; background: var(--card-bg); min-height: 380px;">
+          <div class="tree-title mb-2" style="font-size:0.8rem; font-weight:700;">
+            <span>📋 Test Senaryoları</span>
+          </div>
+
+          <!-- Hidden empty container to prevent JS reference breaks -->
+          <div id="importExcelSection" class="d-none"></div>
+
+          <!-- Scrollable Accordion Container inside Sidebar -->
+          <div id="testSuitesAccordion" style="overflow-y:auto; flex-grow:1; max-height: 480px; padding-right:2px; font-size:0.8rem;">
+            <div class="p-3 text-center text-muted" style="font-size: 0.74rem;">Önce yazılım sürümü seçin.</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Sağ Panel: Sürüm Tablosu & Detay Formu -->
+      <main class="dashboard-panel">
+        
+        <!-- Toolbar Panel -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <!-- Collapse Toggle -->
+          <button class="btn-toggle-sidebar" id="btnToggleSidebar">
+            <i class="fa-solid fa-bars-staggered"></i>
+            <span id="toggleText">Paneli Gizle</span>
+          </button>
+
+          <!-- + New Firmware (Visible for Admin) & Category Template Upload -->
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-success d-flex align-items-center gap-2" id="btnUploadTemplateModal" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;">
+              <i class="fa-solid fa-file-excel"></i> Kategori Şablonu Yükle
+            </button>
+            <button class="btn btn-primary d-flex align-items-center gap-2" id="btnNewFirmware" style="border-radius: var(--radius-sm); font-size:0.85rem; font-weight:600;">
+              <i class="fa-solid fa-plus"></i> Sürüm Tanımla (New Firmware)
+            </button>
+          </div>
+        </div>
+
+        <!-- Firmware Info Card (Visible when firmware is selected) -->
+        <div class="card p-3" id="firmwareInfoCard" style="display:none; position:relative; min-height: 85px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 style="font-size: 1.15rem; font-weight:800; color:var(--text-primary); margin:0;" id="infoTitle">EX520v — 240620</h2>
+                <span class="badge bg-info text-white" id="infoStatus" style="font-size:0.68rem; padding: 2px 6px;">In Progress</span>
+              </div>
+              <p style="font-size: 0.8rem; color:var(--text-secondary); margin:0;" id="infoDesc">Sürüm açıklaması buraya yüklenecektir.</p>
+            </div>
+            
+            <!-- Admin delete firmware option -->
+            <button class="btn btn-sm btn-outline-danger d-none" id="btnDeleteFirmware" title="Sürümü ve testlerini sil" style="font-size:0.75rem; padding: 2px 8px;">
+              <i class="fa-solid fa-trash-can"></i> Sürümü Sil
+            </button>
+          </div>
+
+          <!-- Muted Gray Footer Metadata at bottom-right -->
+          <div style="margin-top: 12px; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:12px; font-size:0.72rem; color:var(--text-muted); font-weight:500;">
+            <span>Cihaz: <strong id="infoModel" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
+            <span>Sürüm: <strong id="infoFw" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
+            <span>Yayın: <strong id="infoDate" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
+            <span>Yazar: <strong id="infoCreator" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
+            <span>Build: <strong id="infoBuild" style="color:var(--text-secondary); font-weight:600;">—</strong></span>
+          </div>
+        </div>
+
+        <!-- Empty State Panel (when no firmware is selected) -->
+        <div class="card p-5 text-center" id="emptyStatePanel">
+          <div style="font-size: 3.5rem; margin-bottom:12px;">📁</div>
+          <h4 class="fw-bold">Yazılım Sürümü Seçilmedi</h4>
+          <p class="text-muted mx-auto" style="max-width:400px; font-size:0.88rem;">Sol paneldeki Cihaz ve Sürüm dropdown listelerinden seçim yapın.</p>
+        </div>
+
+        <!-- Test Case Detail Area (Visible when firmware is selected) -->
+        <div id="testCasesPanel" class="d-none" style="display:flex; flex-direction:column; gap:20px;">
+          <!-- 📋 Test Senaryosu Seçilmedi Kartı -->
+          <div class="card p-5 text-center" id="noCaseSelectedPanel">
+            <div style="font-size: 3rem; margin-bottom:12px; opacity:0.8;">📋</div>
+            <h5 class="fw-bold">Test Senaryosu Seçilmedi</h5>
+            <p class="text-muted mx-auto" style="max-width:420px; font-size:0.84rem;">Soldaki test senaryoları listesinden detayını görüntülemek ve test sonucunu girmek istediğiniz bir test maddesini seçin.</p>
+          </div>
+
+          <!-- 📋 Test Detay Kartı (Master-Detail Embedded View) -->
+          <div class="card p-4 d-none" id="caseDetailCard" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); box-shadow: var(--card-shadow);">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+              <h3 class="fw-bold" style="font-size:1.1rem; margin:0; color:var(--text-primary);" id="detailCardTitle">TC-001 Detayları</h3>
+              <span class="badge bg-secondary text-white" id="detPriority" style="font-size:0.72rem; padding: 3px 10px; text-transform:none;">Medium</span>
+            </div>
+
+            <!-- Top: Test Procedure / Steps Prominent Box (First Focus) -->
+            <div class="procedure-card mb-4" id="detDescriptionContainer" style="background: var(--bg-secondary); border-left: 4px solid var(--accent-primary); border-radius: var(--radius-sm); padding: 18px 22px; border-top: 1px solid var(--card-border); border-right: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);">
+              <div class="mb-2">
+                <span class="fw-bold text-uppercase text-secondary d-flex align-items-center gap-2" style="font-size:0.75rem; letter-spacing:0.04em;">
+                  <i class="fa-solid fa-clipboard-list text-primary"></i> Test Prosedürü &amp; Uygulama Adımları
+                </span>
+              </div>
+              
+              <!-- Clean HTML-rendered procedure viewer -->
+              <div class="procedure-text text-start" id="detDescriptionView" style="font-size:0.88rem; line-height:1.6; color:var(--text-primary); white-space: normal; word-break: break-word;">
+                <!-- Description text goes here -->
+              </div>
+            </div>
+
+            <!-- Middle: Horizontal Metadata Bar -->
+            <div class="info-bar-horizontal mb-4" style="display:flex; flex-wrap:wrap; gap:24px; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 14px 18px;">
+              <div class="info-item" style="display:flex; flex-direction:column; gap:2px; border-right:1px solid var(--card-border); padding-right:24px;">
+                <span class="info-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Test ID</span>
+                <span class="info-value text-primary fw-bold" style="font-size:0.86rem;" id="detId">—</span>
+              </div>
+              <div class="info-item" style="display:flex; flex-direction:column; gap:2px; border-right:1px solid var(--card-border); padding-right:24px;">
+                <span class="info-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Test Suite</span>
+                <span class="info-value fw-semibold" style="font-size:0.84rem;" id="detSuite">—</span>
+              </div>
+              <div class="info-item" style="display:flex; flex-direction:column; gap:2px; flex-grow:1; min-width:0;">
+                <span class="info-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Test Senaryosu</span>
+                <span class="info-value fw-semibold text-truncate" style="font-size:0.84rem; display:block;" id="detCase">—</span>
+              </div>
+            </div>
+
+            <!-- Bottom: Sol/Sağ split (Sol: Ekler | Sağ: Sonuç & Yorum & Geçmiş) -->
+            <div class="row g-4">
+              <!-- Sol Sütun: Dosya Ekleri -->
+              <div class="col-md-6 border-end pe-md-4">
+                <div class="detail-section">
+                  <div class="detail-label fw-bold text-muted mb-2" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">
+                    <i class="fa-solid fa-paperclip text-secondary me-1"></i> Dosya Ekleri (Attachments)
+                  </div>
+                  <div id="attachmentsContainer" class="mb-3"></div>
+                  <div class="input-group input-group-sm mb-2" id="attachmentUploadForm" style="display:none;">
+                    <input type="file" class="form-control" id="attachmentFileInput" style="font-size:0.78rem;">
+                    <button class="btn btn-outline-primary" type="button" id="btnUploadAttachment" style="font-size:0.78rem;">Yükle</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sağ Sütun: Test Sonuç Girişi -->
+              <div class="col-md-6 ps-md-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-1" style="font-size:0.88rem; color:var(--text-primary);">
+                  <i class="fa-solid fa-square-poll-vertical text-primary"></i> Test Sonuç Girişi
+                </h5>
+                
+                <div class="form-group mb-2">
+                  <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detResult">Test Sonucu</label>
+                  <select id="detResult" class="form-select form-select-sm" style="font-size:0.82rem; margin-top:2px;">
+                    <option value="Not Run">Not Run</option>
+                    <option value="Pass">Pass</option>
+                    <option value="Partial OK (POK)">Partial OK (POK)</option>
+                    <option value="Fail">Fail</option>
+                    <option value="Blocked">Blocked</option>
+                    <option value="Retest">Retest</option>
+                  </select>
+                </div>
+
+                <div class="form-group mb-2">
+                  <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detTester">Test Eden (Tester)</label>
+                  <input type="text" id="detTester" class="form-control form-control-sm" style="font-size:0.82rem; margin-top:2px;" readonly>
+                </div>
+
+                <div class="form-group mb-3">
+                  <label class="detail-label fw-bold text-muted" style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;" for="detComment">Yorum (Comment)</label>
+                  <textarea id="detComment" class="form-control form-control-sm" rows="3" placeholder="Testle ilgili yorum yazın..." style="font-size:0.82rem; margin-top:2px;"></textarea>
+                </div>
+
+                <button class="btn btn-sm btn-primary w-100 mb-4" id="btnSaveResult" style="font-weight:600; font-size:0.82rem;">
+                  <i class="fa-solid fa-floppy-disk"></i> Test Sonucunu Kaydet
+                </button>
+
+                <!-- Değişiklik Geçmişi (History) -->
+                <div class="detail-section border-top pt-3">
+                  <div class="detail-label fw-bold text-muted mb-2" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">
+                    <i class="fa-solid fa-history text-secondary me-1"></i> Değişiklik Geçmişi
+                  </div>
+                  <ul id="historyList" class="p-0 m-0" style="list-style:none; font-size:0.76rem; max-height: 120px; overflow-y:auto; line-height:1.4;"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer mt-5">
+      <p>Yazılım Test Yönetim Portalı (TestLink UI) &middot; TP-Link Network Group &copy; 2026</p>
+    </footer>
+  </div>
+
+  <!-- New Firmware Registration Modal (White-toned Overlay) -->
+  <div class="password-modal-overlay" id="newFirmwareModal" style="display:none; z-index:1500;">
+    <div class="modal card" style="max-width: 480px; width:100%;">
+      <div class="modal-header">
+        <h3>➕ Yeni Sürüm Ekle (New Firmware)</h3>
+        <button class="modal-close" id="newFirmwareClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Sistemde tanımlı bir cihaz modeli için yeni test sürümü oluşturun.</p>
+
+      <div class="modal-form">
+        <div class="form-group">
+          <label for="newFwModel">Cihaz Modeli</label>
+          <select id="newFwModel" style="margin-top:4px;">
+            <option value="" disabled selected>Model seçin</option>
+            <optgroup label="HGW Cihazları">
+              <option value="Archer C5v">Archer C5v</option>
+              <option value="EX20v">EX20v</option>
+              <option value="EX520v">EX520v</option>
+            </optgroup>
+            <optgroup label="DSL Cihazları">
+              <option value="VC220-G3u">VC220-G3u</option>
+              <option value="VX231">VX231</option>
+            </optgroup>
+            <optgroup label="Mesh Cihazları">
+              <option value="HX520">HX520</option>
+            </optgroup>
+            <optgroup label="5G FWA Cihazları">
+              <option value="NX540">NX540</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="newFwVersion">Yazılım Sürümü (Firmware Version)</label>
+          <input type="text" id="newFwVersion" placeholder="Örn: 240720 veya 1.0.6">
+        </div>
+
+        <div class="form-group">
+          <label for="newFwDate">Yayınlanma Tarihi (Release Date)</label>
+          <input type="date" id="newFwDate">
+        </div>
+
+        <div class="form-group">
+          <label for="newFwBuild">Build Numarası</label>
+          <input type="text" id="newFwBuild" placeholder="Örn: Build 20260706.Rel3342">
+        </div>
+
+        <div class="form-group">
+          <label for="newFwDesc">Sürüm Açıklaması (Description)</label>
+          <textarea id="newFwDesc" rows="3" placeholder="Yazılım sürümüne ait detaylar..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--card-border); padding-top:16px;">
+        <button class="btn-modal-cancel" id="newFirmwareCancel">İptal</button>
+        <button class="btn-modal-save-only" id="newFirmwareCreate">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kategori Excel Şablonu Yükleme Modalı (White-toned Overlay) -->
+  <div class="password-modal-overlay" id="templateUploadModal" style="display:none; z-index:1500;">
+    <div class="modal card" style="max-width: 480px; width:100%;">
+      <div class="modal-header">
+        <h3>🔄 Kategori Excel Şablonu Yükle</h3>
+        <button class="modal-close" id="templateUploadClose" title="Kapat">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc">Seçeceğiniz cihaz türü kategorisine ait tüm eski şablon testleri silinerek bu Excel dosyasındaki yeni maddelerle güncellenir.</p>
+
+      <div class="modal-form">
+        <div class="form-group mb-3">
+          <label for="templateDeviceType" style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">Cihaz Türü (Kategori)</label>
+          <select id="templateDeviceType" style="margin-top:4px;">
+            <option value="HGW Cihazları">HGW Cihazları (Archer C5v, EX20v, EX520v)</option>
+            <option value="DSL Cihazları">DSL Cihazları (VC220-G3u, VX231)</option>
+            <option value="Mesh Cihazları">Mesh Cihazları (HX520)</option>
+            <option value="5G FWA Cihazları">5G FWA Cihazları (NX540)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="templateFileInput" style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">Excel Dosyası Seçin</label>
+          <input type="file" id="templateFileInput" accept=".xlsx,.xls,.csv">
+        </div>
+        <p style="font-size: 0.72rem; color:var(--text-muted); margin-top:12px;">
+          * Yüklenecek excel tablosu 4 ana sütundan oluşmalıdır: <strong>Test Suite</strong>, <strong>Öncelik</strong>, <strong>Test Maddesi</strong>, <strong>Açıklama</strong>.
+        </p>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--card-border); padding-top:16px;">
+        <button class="btn-modal-cancel" id="templateUploadCancel">İptal</button>
+        <button class="btn-modal-save-only" id="btnDoTemplateUpload">Şablonu Güncelle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
+  <!-- JQuery & DataTables & SheetJS & Bootstrap Bundle -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Control Logics -->
+  <script>
+    // ===== Auth check =====
+    auth.onAuthStateChanged((user) => {
+      if (!user || !isTPLinkEmail(user.email)) {
+        window.location.href = 'login.html?redirected=true';
+      } else {
+        // Trigger smooth fade-in
+        const style = document.createElement('style');
+        style.innerHTML = 'body { opacity: 1 !important; }';
+        document.head.appendChild(style);
+      }
+    });
+
+    (function() {
+      'use strict';
+
+      // Elements
+      const modelSelect = document.getElementById('modelSelect');
+      const versionSelect = document.getElementById('versionSelect');
+      const emptyStatePanel = document.getElementById('emptyStatePanel');
+      const firmwareInfoCard = document.getElementById('firmwareInfoCard');
+      const testCasesPanel = document.getElementById('testCasesPanel');
+      const importExcelSection = document.getElementById('importExcelSection');
+      const testSuitesAccordion = document.getElementById('testSuitesAccordion');
+      const tableControls = document.getElementById('tableControls');
+
+      const infoTitle = document.getElementById('infoTitle');
+      const infoDesc = document.getElementById('infoDesc');
+      const infoModel = document.getElementById('infoModel');
+      const infoFw = document.getElementById('infoFw');
+      const infoDate = document.getElementById('infoDate');
+      const infoBuild = document.getElementById('infoBuild');
+      const infoCreator = document.getElementById('infoCreator');
+      const infoStatus = document.getElementById('infoStatus');
+
+      // Theme toggle
+      const btnThemeToggle = document.getElementById('btnThemeToggle');
+      const themeIcon = btnThemeToggle.querySelector('i');
+      
+      // Sidebar Collapse
+      const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+      const treeSidebar = document.getElementById('treeSidebar');
+      const toggleText = document.getElementById('toggleText');
+
+      // Role Select
+      const roleSelect = document.getElementById('roleSelect');
+      const btnNewFirmware = document.getElementById('btnNewFirmware');
+      const btnDeleteFirmware = document.getElementById('btnDeleteFirmware');
+      const btnUploadTemplateModal = document.getElementById('btnUploadTemplateModal');
+      const attachmentUploadForm = document.getElementById('attachmentUploadForm');
+
+      // Modals
+      const newFirmwareModal = document.getElementById('newFirmwareModal');
+      const newFirmwareClose = document.getElementById('newFirmwareClose');
+      const newFirmwareCancel = document.getElementById('newFirmwareCancel');
+      const newFirmwareCreate = document.getElementById('newFirmwareCreate');
+      const newFwModel = document.getElementById('newFwModel');
+      const newFwVersion = document.getElementById('newFwVersion');
+      const newFwDate = document.getElementById('newFwDate');
+      const newFwBuild = document.getElementById('newFwBuild');
+      const newFwDesc = document.getElementById('newFwDesc');
+
+      const templateUploadModal = document.getElementById('templateUploadModal');
+      const templateUploadClose = document.getElementById('templateUploadClose');
+      const templateUploadCancel = document.getElementById('templateUploadCancel');
+      const templateDeviceType = document.getElementById('templateDeviceType');
+      const templateFileInput = document.getElementById('templateFileInput');
+      const btnDoTemplateUpload = document.getElementById('btnDoTemplateUpload');
+      const btnOpenTemplateUploadFromEmpty = document.getElementById('btnOpenTemplateUploadFromEmpty');
+      const btnLoadDefaultCases = document.getElementById('btnLoadDefaultCases');
+
+      // Details Embedded Panels (Instead of Drawer)
+      const noCaseSelectedPanel = document.getElementById('noCaseSelectedPanel');
+      const caseDetailCard = document.getElementById('caseDetailCard');
+      const detailCardTitle = document.getElementById('detailCardTitle');
+      const detId = document.getElementById('detId');
+      const detSuite = document.getElementById('detSuite');
+      const detPriority = document.getElementById('detPriority');
+      const detCase = document.getElementById('detCase');
+      const detDescriptionView = document.getElementById('detDescriptionView');
+      const detDescriptionEditForm = document.getElementById('detDescriptionEditForm');
+      const detDescriptionInput = document.getElementById('detDescriptionInput');
+      const btnCancelEditDesc = document.getElementById('btnCancelEditDesc');
+      const btnSaveEditDesc = document.getElementById('btnSaveEditDesc');
+      const btnEditDescription = document.getElementById('btnEditDescription');
+      
+      const detResult = document.getElementById('detResult');
+      const detTester = document.getElementById('detTester');
+      const detComment = document.getElementById('detComment');
+      const btnSaveResult = document.getElementById('btnSaveResult');
+      
+      const attachmentsContainer = document.getElementById('attachmentsContainer');
+      const attachmentFileInput = document.getElementById('attachmentFileInput');
+      const btnUploadAttachment = document.getElementById('btnUploadAttachment');
+      const historyList = document.getElementById('historyList');
+
+      // Stats Wrapper & Progress elements
+      const dashboardStatsSection = document.getElementById('dashboardStatsSection');
+      const globalProgressSection = document.getElementById('globalProgressSection');
+      const progressPercentText = document.getElementById('progressPercentText');
+      const progressBarStack = document.getElementById('progressBarStack');
+      const progTotal = document.getElementById('progTotal');
+      const progPass = document.getElementById('progPass');
+      const progPok = document.getElementById('progPok');
+      const progFail = document.getElementById('progFail');
+      const progBlocked = document.getElementById('progBlocked');
+      const progRetest = document.getElementById('progRetest');
+      const progNotRun = document.getElementById('progNotRun');
+
+      // Stats cards
+      const cardTotal = document.getElementById('cardTotal');
+      const cardPassed = document.getElementById('cardPassed');
+      const cardPok = document.getElementById('cardPok');
+      const cardFailed = document.getElementById('cardFailed');
+      const cardBlocked = document.getElementById('cardBlocked');
+      const cardPercent = document.getElementById('cardPercent');
+
+      // Local State
+      let firmwaresList = [];
+      let activeFirmware = null; // { id, model, firmware, ... }
+      let activeCases = []; // Array of test cases
+      let activeRole = 'Tester';
+      let activeCaseInDrawer = null;
+
+      // ===== Init & Themes =====
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeIcon.className = 'fa-solid fa-sun';
+      }
+
+      btnThemeToggle.addEventListener('click', () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        themeIcon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      });
+
+      // Collapse tree
+      btnToggleSidebar.addEventListener('click', () => {
+        const isCollapsed = treeSidebar.classList.toggle('collapsed');
+        toggleText.textContent = isCollapsed ? 'Paneli Göster' : 'Paneli Gizle';
+      });
+
+      // Role selection handler
+      roleSelect.addEventListener('change', () => {
+        activeRole = roleSelect.value;
+        applyRoleRestrictions();
+        if (activeFirmware) {
+          renderTestCasesAccordion();
+        }
+      });
+
+      function applyRoleRestrictions() {
+        if (activeRole === 'Admin') {
+          btnNewFirmware.classList.remove('d-none');
+          btnDeleteFirmware.classList.remove('d-none');
+          btnUploadTemplateModal.classList.remove('d-none');
+          attachmentUploadForm.style.display = 'flex';
+          btnEditDescription.classList.remove('d-none');
+          
+          detResult.removeAttribute('disabled');
+          detComment.removeAttribute('disabled');
+          btnSaveResult.classList.remove('d-none');
+        } else if (activeRole === 'Tester') {
+          btnNewFirmware.classList.remove('d-none');
+          btnDeleteFirmware.classList.add('d-none');
+          btnUploadTemplateModal.classList.remove('d-none');
+          attachmentUploadForm.style.display = 'flex';
+          btnEditDescription.classList.remove('d-none');
+          
+          detResult.removeAttribute('disabled');
+          detComment.removeAttribute('disabled');
+          btnSaveResult.classList.remove('d-none');
+        } else { // Viewer
+          btnNewFirmware.classList.add('d-none');
+          btnDeleteFirmware.classList.add('d-none');
+          btnUploadTemplateModal.classList.add('d-none');
+          attachmentUploadForm.style.display = 'none';
+          btnEditDescription.classList.add('d-none');
+          
+          detResult.setAttribute('disabled', 'true');
+          detComment.setAttribute('disabled', 'true');
+          btnSaveResult.classList.add('d-none');
+        }
+      }
+
+      // ===== Model Categories mapping for listbox grouping =====
+      const MODEL_CATEGORIES = {
+        'HGW Cihazları': ['Archer C5v', 'EX20v', 'EX520v'],
+        'DSL Cihazları': ['VC220-G3u', 'VX231'],
+        'Mesh Cihazları': ['HX520'],
+        '5G FWA Cihazları': ['NX540']
+      };
+
+      let selectedModel = null;
+
+      // ===== Load Dropdowns and Metadata =====
+      async function loadTree() {
+        try {
+          firmwaresList = await getTestlinkFirmwares();
+          
+          if (selectedModel) {
+            modelSelect.value = selectedModel;
+            // trigger model change to populate versions select
+            const modelGroups = {};
+            firmwaresList.forEach(fw => {
+              if (!modelGroups[fw.model]) modelGroups[fw.model] = [];
+              modelGroups[fw.model].push(fw);
+            });
+            populateVersionsSelect(modelGroups[selectedModel] || []);
+
+            if (activeFirmware) {
+              versionSelect.value = activeFirmware.id;
+            }
+          }
+        } catch (e) {
+          console.error("Dropdown loading error:", e);
+        }
+      }
+
+      function populateVersionsSelect(versions) {
+        versionSelect.innerHTML = '<option value="" disabled selected>Sürüm seçin</option>';
+        if (versions.length === 0) {
+          versionSelect.innerHTML = '<option value="">Yazılım Sürümü Bulunmuyor</option>';
+          versionSelect.setAttribute('disabled', 'true');
+          return;
+        }
+
+        // Sort versions descending
+        versions.sort((a, b) => b.firmware.localeCompare(a.firmware)).forEach(fw => {
+          const opt = document.createElement('option');
+          opt.value = fw.id;
+          opt.textContent = fw.firmware;
+          versionSelect.appendChild(opt);
+        });
+
+        versionSelect.removeAttribute('disabled');
+      }
+
+      // Model selection change handler
+      modelSelect.addEventListener('change', () => {
+        selectedModel = modelSelect.value;
+        const modelGroups = {};
+        firmwaresList.forEach(fw => {
+          if (!modelGroups[fw.model]) modelGroups[fw.model] = [];
+          modelGroups[fw.model].push(fw);
+        });
+
+        populateVersionsSelect(modelGroups[selectedModel] || []);
+        
+        // Hide panel details if user switches model
+        activeFirmware = null;
+        emptyStatePanel.style.display = 'block';
+        firmwareInfoCard.style.display = 'none';
+        testCasesPanel.classList.add('d-none');
+        dashboardStatsSection.style.display = 'none';
+        noCaseSelectedPanel.classList.remove('d-none');
+        caseDetailCard.classList.add('d-none');
+      });
+
+      // Version selection change handler
+      versionSelect.addEventListener('change', () => {
+        const fwId = versionSelect.value;
+        const fw = firmwaresList.find(f => f.id === fwId);
+        if (fw) {
+          selectFirmware(fw);
+        }
+      });
+
+      // Select and Load a Firmware details
+      async function selectFirmware(fw) {
+        activeFirmware = fw;
+
+        // Sync selection controls in the sidebar
+        modelSelect.value = fw.model;
+        selectedModel = fw.model;
+        
+        const modelGroups = {};
+        firmwaresList.forEach(f => {
+          if (!modelGroups[f.model]) modelGroups[f.model] = [];
+          modelGroups[f.model].push(f);
+        });
+        populateVersionsSelect(modelGroups[fw.model] || []);
+        versionSelect.value = fw.id;
+
+        emptyStatePanel.style.display = 'none';
+        firmwareInfoCard.style.display = 'block';
+        testCasesPanel.classList.remove('d-none');
+        dashboardStatsSection.style.display = 'block'; // Sürüm tıklandığında istatistik panelini göster
+
+        // Fill metadata
+        infoTitle.textContent = `${fw.model} — ${fw.firmware}`;
+        infoDesc.textContent = fw.description || 'Bu sürüme ait açıklama bulunmuyor.';
+        infoModel.textContent = fw.model;
+        infoFw.textContent = fw.firmware;
+        infoDate.textContent = fw.releaseDate || '—';
+        infoBuild.textContent = fw.buildNo || '—';
+        infoCreator.textContent = fw.createdBy || 'System';
+        infoStatus.textContent = fw.status || 'In Progress';
+        infoStatus.className = `badge bg-${fw.status === 'Completed' ? 'success' : 'info'} text-white`;
+
+        await loadTestCases();
+      }
+
+      async function loadTestCases() {
+        if (!activeFirmware) return;
+
+        try {
+          const category = getDeviceTypeForModel(activeFirmware.model);
+          const [templates, results] = await Promise.all([
+            getCategoryTemplates(category),
+            getFirmwareResults(activeFirmware.id)
+          ]);
+
+          // Merge templates with results
+          activeCases = templates.map(tc => {
+            const res = results.find(r => r.testId === tc.testId);
+            return {
+              testId: tc.testId,
+              testSuite: tc.testSuite,
+              priority: tc.priority,
+              testCase: tc.testCase,
+              description: tc.description,
+              result: res ? res.result : 'Not Run',
+              tester: res ? res.tester : '—',
+              comment: res ? res.comment : '',
+              attachments: res ? res.attachments : [],
+              history: res ? res.history : []
+            };
+          });
+
+          renderTestCasesAccordion();
+        } catch (e) {
+          console.error("Test cases loading error:", e);
+        }
+      }
+
+      function calculateStats() {
+        const total = activeCases.length;
+        if (total === 0) {
+          globalProgressSection.style.display = 'none';
+          // reset dashboard
+          cardTotal.textContent = 0;
+          cardPassed.textContent = 0;
+          cardPok.textContent = 0;
+          cardFailed.textContent = 0;
+          cardBlocked.textContent = 0;
+          cardPercent.textContent = '0%';
+          return;
+        }
+
+        dashboardStatsSection.style.display = 'block';
+        globalProgressSection.style.display = 'block';
+
+        let pass = 0, pok = 0, fail = 0, blocked = 0, retest = 0, notRun = 0;
+        activeCases.forEach(c => {
+          if (c.result === 'Pass') pass++;
+          else if (c.result === 'Partial OK (POK)') pok++;
+          else if (c.result === 'Fail') fail++;
+          else if (c.result === 'Blocked') blocked++;
+          else if (c.result === 'Retest') retest++;
+          else notRun++;
+        });
+
+        const completed = pass + pok + fail + blocked + retest;
+        const completionPercent = Math.round((completed / total) * 100);
+
+        // Update progress text
+        progressPercentText.textContent = `${completionPercent}%`;
+        progTotal.textContent = total;
+        progPass.textContent = pass;
+        progPok.textContent = pok;
+        progFail.textContent = fail;
+        progBlocked.textContent = blocked;
+        progRetest.textContent = retest;
+        progNotRun.textContent = notRun;
+
+        // Render stacked bar segments
+        progressBarStack.innerHTML = '';
+        const segments = [
+          { count: pass, class: 'bg-pass' },
+          { count: pok, class: 'bg-pok' },
+          { count: fail, class: 'bg-fail' },
+          { count: blocked, class: 'bg-blocked' },
+          { count: retest, class: 'bg-retest' },
+          { count: notRun, class: 'bg-notrun' }
+        ];
+
+        segments.forEach(seg => {
+          if (seg.count > 0) {
+            const width = (seg.count / total) * 100;
+            const div = document.createElement('div');
+            div.className = `progress-segment ${seg.class}`;
+            div.style.width = `${width}%`;
+            progressBarStack.appendChild(div);
+          }
+        });
+
+        // Update dashboard cards
+        cardTotal.textContent = total;
+        cardPassed.textContent = pass;
+        cardPok.textContent = pok;
+        cardFailed.textContent = fail;
+        cardBlocked.textContent = blocked;
+        cardPercent.textContent = `${completionPercent}%`;
+      }
+
+      function renderTestCasesAccordion() {
+        calculateStats();
+
+        if (activeCases.length === 0) {
+          importExcelSection.classList.remove('d-none');
+          testSuitesAccordion.style.display = 'none';
+          return;
+        }
+
+        importExcelSection.classList.add('d-none');
+        testSuitesAccordion.style.display = 'block';
+
+        testSuitesAccordion.innerHTML = '';
+
+        // Group by testSuite
+        const grouped = {};
+        activeCases.forEach(c => {
+          if (!grouped[c.testSuite]) grouped[c.testSuite] = [];
+          grouped[c.testSuite].push(c);
+        });
+
+        // Loop testSuites keys
+        Object.keys(grouped).sort().forEach((suiteName, index) => {
+          const cases = grouped[suiteName];
+          
+          // Calculate status for headers badge
+          const passedCount = cases.filter(c => c.result === 'Pass').length;
+          const totalCount = cases.length;
+
+          // Check if this suite contains the active case in drawer to keep it expanded
+          const containsActive = activeCaseInDrawer && cases.some(c => c.testId === activeCaseInDrawer.testId);
+
+          const accordionItem = document.createElement('div');
+          accordionItem.className = 'accordion-item';
+
+          const headerId = `heading_${index}`;
+          const collapseId = `collapse_${index}`;
+
+          const h2 = document.createElement('h2');
+          h2.className = 'accordion-header';
+          h2.id = headerId;
+
+          const btn = document.createElement('button');
+          btn.className = 'accordion-button';
+          if (!containsActive) {
+            btn.classList.add('collapsed');
+          }
+          btn.type = 'button';
+          btn.dataset.bsToggle = 'collapse';
+          btn.dataset.bsTarget = `#${collapseId}`;
+          btn.setAttribute('aria-expanded', containsActive ? 'true' : 'false');
+          btn.setAttribute('aria-controls', collapseId);
+
+          btn.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between w-100 me-3">
+              <span class="fw-bold text-truncate" style="max-width: calc(100% - 65px);"><i class="fa-solid fa-folder-open me-2 text-primary"></i>${escapeHtml(suiteName)}</span>
+              <span class="badge bg-secondary text-white" style="font-size:0.65rem; text-transform:none; font-weight:600; padding:2px 6px; flex-shrink: 0;">
+                ${passedCount}/${totalCount}
+              </span>
+            </div>
+          `;
+          h2.appendChild(btn);
+          accordionItem.appendChild(h2);
+
+          const collapseDiv = document.createElement('div');
+          collapseDiv.id = collapseId;
+          collapseDiv.className = 'accordion-collapse collapse';
+          if (containsActive) {
+            collapseDiv.classList.add('show');
+          }
+          collapseDiv.setAttribute('aria-labelledby', headerId);
+          collapseDiv.dataset.bsParent = '#testSuitesAccordion';
+
+          const bodyDiv = document.createElement('div');
+          bodyDiv.className = 'accordion-body';
+
+          // Loop cases in this Suite
+          cases.sort((a,b) => a.testId.localeCompare(b.testId)).forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            
+            // Add active highlight if selected
+            if (activeCaseInDrawer && activeCaseInDrawer.testId === c.testId) {
+              item.classList.add('active-test-item');
+            }
+
+            // Add status-based color class
+            if (c.result && c.result !== 'Not Run') {
+              const resClass = c.result === 'Pass' ? 'test-item-pass' :
+                               c.result === 'Partial OK (POK)' ? 'test-item-pok' :
+                               c.result === 'Fail' ? 'test-item-fail' :
+                               c.result === 'Blocked' ? 'test-item-blocked' :
+                               c.result === 'Retest' ? 'test-item-retest' : '';
+              if (resClass) item.classList.add(resClass);
+            }
+
+            item.innerHTML = `
+              <div class="d-flex align-items-start gap-2" style="max-width: 80%; text-align: left;">
+                <span class="fw-bold text-secondary" style="font-size:0.72rem; line-height: 1.3; flex-shrink: 0;">${c.testId}</span>
+                <span style="font-size:0.75rem; line-height: 1.3; font-weight: 500;">${escapeHtml(c.testCase)}</span>
+              </div>
+              <span style="font-size:0.66rem; font-weight:700; opacity:0.85; margin-left: 8px; flex-shrink: 0;">${c.result}</span>
+            `;
+
+            item.addEventListener('click', () => {
+              openCaseDetail(c);
+            });
+
+            bodyDiv.appendChild(item);
+          });
+
+          collapseDiv.appendChild(bodyDiv);
+          accordionItem.appendChild(collapseDiv);
+
+          testSuitesAccordion.appendChild(accordionItem);
+        });
+      }
+
+      // ===== Test Case Detail Embedded Card Logic =====
+      function openCaseDetail(c) {
+        activeCaseInDrawer = c;
+        
+        // Show detail card and hide no case selected panel
+        noCaseSelectedPanel.classList.add('d-none');
+        caseDetailCard.classList.remove('d-none');
+
+        detailCardTitle.textContent = `${c.testId} Detayları`;
+        detId.textContent = c.testId;
+        detSuite.textContent = c.testSuite;
+        detPriority.textContent = c.priority || 'Medium';
+        detCase.textContent = c.testCase;
+        
+        // Reset Edit/View state for description
+        detDescriptionView.classList.remove('d-none');
+        detDescriptionEditForm.classList.add('d-none');
+        
+        if (activeRole === 'Admin' || activeRole === 'Tester') {
+          btnEditDescription.classList.remove('d-none');
+        } else {
+          btnEditDescription.classList.add('d-none');
+        }
+        
+        // Populate Description view & edit fields
+        detDescriptionView.innerHTML = c.description ? formatDescriptionText(c.description) : '<span class="text-muted" style="font-style: italic;">Açıklama/prosedür tanımlanmamış.</span>';
+        detDescriptionInput.value = c.description || '';
+        
+        // Fill result inputs inside detail card
+        detResult.value = c.result || 'Not Run';
+        detTester.value = c.tester || auth.currentUser?.email || 'System';
+        detComment.value = c.comment || '';
+        
+        renderAttachments(c);
+        renderHistory(c);
+
+        // Render accordion to update active item highlights
+        renderTestCasesAccordion();
+      }
+
+      function formatDescriptionText(text) {
+        if (!text) return '';
+        return escapeHtml(text).replace(/\n/g, '<br>');
+      }
+
+      // Save result click handler
+      btnSaveResult.addEventListener('click', async () => {
+        if (!activeCaseInDrawer || !activeFirmware) return;
+
+        btnSaveResult.disabled = true;
+        const origContent = btnSaveResult.innerHTML;
+        btnSaveResult.textContent = 'Kaydediliyor…';
+
+        try {
+          const resVal = detResult.value;
+          const comVal = detComment.value;
+          
+          await updateFirmwareTestCaseResult(activeFirmware.id, activeCaseInDrawer.testId, resVal, comVal);
+
+          // Update local state in activeCases array
+          const localC = activeCases.find(c => c.testId === activeCaseInDrawer.testId);
+          if (localC) {
+            localC.result = resVal;
+            localC.comment = comVal;
+            localC.tester = auth.currentUser?.email || 'System';
+            // Update activeCaseInDrawer details
+            activeCaseInDrawer.result = resVal;
+            activeCaseInDrawer.comment = comVal;
+            activeCaseInDrawer.tester = localC.tester;
+            detTester.value = localC.tester;
+          }
+
+          calculateStats();
+          renderTestCasesAccordion();
+          showToast("💾 Test sonucu kaydedildi.", "success");
+        } catch (err) {
+          alert("Kaydetme hatası: " + err.message);
+        } finally {
+          btnSaveResult.disabled = false;
+          btnSaveResult.innerHTML = origContent;
+        }
+      });
+
+      function renderAttachments(c) {
+        attachmentsContainer.innerHTML = '';
+        if (!c.attachments || c.attachments.length === 0) {
+          attachmentsContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem;">Dosya eklenmemiş.</span>';
+          return;
+        }
+
+        c.attachments.forEach(att => {
+          const div = document.createElement('div');
+          div.className = 'd-flex align-items-center justify-content-between p-1 bg-light border rounded mb-1';
+          div.style.fontSize = '0.78rem';
+          div.innerHTML = `
+            <a href="${att.url}" download="${att.name}" class="text-truncate text-decoration-none fw-semibold" style="max-width:240px;"><i class="fa-solid fa-paperclip"></i> ${att.name}</a>
+            <span class="text-muted" style="font-size:0.7rem;">${att.date}</span>
+          `;
+          attachmentsContainer.appendChild(div);
+        });
+      }
+
+      function renderHistory(c) {
+        historyList.innerHTML = '';
+        if (!c.history || c.history.length === 0) {
+          historyList.innerHTML = '<li class="text-muted">Geçmiş kaydı bulunmuyor.</li>';
+          return;
+        }
+
+        c.history.slice().reverse().forEach(log => {
+          const li = document.createElement('li');
+          li.className = 'mb-1 border-bottom pb-1';
+          li.innerHTML = `
+            <div class="d-flex justify-content-between text-muted" style="font-size:0.68rem;">
+              <strong>${log.user}</strong>
+              <span>${log.date}</span>
+            </div>
+            <div style="color:var(--text-primary); margin-top:2px;">${log.action}</div>
+          `;
+          historyList.appendChild(li);
+        });
+      }
+
+      // Drawer attachment upload
+      btnUploadAttachment.addEventListener('click', async () => {
+        const file = attachmentFileInput.files[0];
+        if (!file || !activeCaseInDrawer || !activeFirmware) return;
+
+        btnUploadAttachment.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const fileDataUrl = e.target.result; // base64
+          try {
+            await addTestCaseAttachment(activeFirmware.id, activeCaseInDrawer.testId, file.name, fileDataUrl);
+            
+            // update local state
+            if (!activeCaseInDrawer.attachments) activeCaseInDrawer.attachments = [];
+            activeCaseInDrawer.attachments.push({
+              name: file.name,
+              url: fileDataUrl,
+              date: new Date().toISOString().split('T')[0]
+            });
+            
+            renderAttachments(activeCaseInDrawer);
+            attachmentFileInput.value = '';
+            showToast("📎 Dosya başarıyla eklendi.", "success");
+          } catch (err) {
+            alert("Dosya yüklenemedi: " + err.message);
+          } finally {
+            btnUploadAttachment.disabled = false;
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Toggle edit description state
+      btnEditDescription.addEventListener('click', () => {
+        detDescriptionView.classList.add('d-none');
+        btnEditDescription.classList.add('d-none');
+        detDescriptionEditForm.classList.remove('d-none');
+        detDescriptionInput.focus();
+      });
+
+      btnCancelEditDesc.addEventListener('click', () => {
+        detDescriptionView.classList.remove('d-none');
+        if (activeRole === 'Admin' || activeRole === 'Tester') {
+          btnEditDescription.classList.remove('d-none');
+        }
+        detDescriptionEditForm.classList.add('d-none');
+        detDescriptionInput.value = activeCaseInDrawer.description || '';
+      });
+
+      btnSaveEditDesc.addEventListener('click', async () => {
+        if (!activeCaseInDrawer || !activeFirmware) return;
+        const descVal = detDescriptionInput.value;
+        
+        btnSaveEditDesc.disabled = true;
+        btnSaveEditDesc.textContent = 'Kaydediliyor…';
+        try {
+          const category = getDeviceTypeForModel(activeFirmware.model);
+          const docId = `${category.replace(/\s+/g, '_')}_${activeCaseInDrawer.testId}`;
+          const ref = db.collection('testlink_templates').doc(docId);
+          await ref.set({ description: descVal }, { merge: true });
+          
+          activeCaseInDrawer.description = descVal;
+          // Update in local cases array
+          const localC = activeCases.find(c => c.testId === activeCaseInDrawer.testId);
+          if (localC) localC.description = descVal;
+
+          detDescriptionView.innerHTML = descVal ? formatDescriptionText(descVal) : '<span class="text-muted" style="font-style: italic;">Açıklama/prosedür tanımlanmamış.</span>';
+
+          showToast("📝 Açıklama başarıyla güncellendi.", "success");
+          
+          // Toggle back to view state
+          detDescriptionView.classList.remove('d-none');
+          if (activeRole === 'Admin' || activeRole === 'Tester') {
+            btnEditDescription.classList.remove('d-none');
+          }
+          detDescriptionEditForm.classList.add('d-none');
+        } catch (err) {
+          alert("Açıklama kaydedilemedi: " + err.message);
+        } finally {
+          btnSaveEditDesc.disabled = false;
+          btnSaveEditDesc.textContent = 'Kaydet';
+        }
+      });
+
+      // ===== Excel Template Upload & Seeding =====
+      if (btnLoadDefaultCases) {
+        btnLoadDefaultCases.addEventListener('click', async () => {
+          if (!activeFirmware) return;
+          btnLoadDefaultCases.disabled = true;
+          try {
+            const mockList = [
+              { testSuite: 'WiFi Performansı', priority: 'High', testCase: '5GHz throughput testi (80MHz)', description: 'Router 5GHz modunda 80MHz band genişliğinde iPerf throughput testi çalıştırılır. Minimum 600 Mbps hız gözlemlenmelidir.' },
+              { testSuite: 'Ağ Bağlantısı', priority: 'High', testCase: 'IPv6 SLAAC adres alımı ve ping testi', description: 'İstemci cihazın IPv6 SLAAC protokolüyle IPv6 adresi alabildiği ve Google DNS IPv6 adresine başarıyla ping atabildiği doğrulanır.' },
+              { testSuite: 'Güvenlik Protokolleri', priority: 'Medium', testCase: 'WPA3-SAE bağlantı ve el sıkışma kararlılığı', description: 'Güvenlik ayarlarında WPA3-SAE şifreleme seçilir. İstemcinin sorunsuz şekilde bağlanıp en az 1 saat bağlantıda kaldığı gözlemlenir.' },
+              { testSuite: 'VLAN Ayarları', priority: 'Medium', testCase: 'LAN Port 4 IPTV VLAN köprüleme', description: 'LAN port 4 IPTV portu olarak konfigüre edilir. IPTV kutusu bağlanarak yayının IGMP multicast trafiğini kesintisiz alabildiği doğrulanır.' }
+            ];
+
+            const category = getDeviceTypeForModel(activeFirmware.model);
+            await uploadCategoryTemplateBulk(category, mockList);
+            showToast("✅ Varsayılan kategori şablon senaryoları yüklendi.", "success");
+            await loadTestCases();
+          } catch (err) {
+            alert("Şablon yükleme hatası: " + err.message);
+          } finally {
+            btnLoadDefaultCases.disabled = false;
+          }
+        });
+      }
+
+      // Show/Hide template modal
+      const openTemplateModal = () => {
+        templateFileInput.value = '';
+        if (activeFirmware) {
+          // pre-select device type based on active firmware
+          templateDeviceType.value = getDeviceTypeForModel(activeFirmware.model);
+        }
+        templateUploadModal.style.display = 'flex';
+      };
+
+      btnUploadTemplateModal.addEventListener('click', openTemplateModal);
+      if (btnOpenTemplateUploadFromEmpty) {
+        btnOpenTemplateUploadFromEmpty.addEventListener('click', openTemplateModal);
+      }
+
+      templateUploadClose.addEventListener('click', () => templateUploadModal.style.display = 'none');
+      templateUploadCancel.addEventListener('click', () => templateUploadModal.style.display = 'none');
+      templateUploadModal.addEventListener('click', (e) => {
+        if (e.target === templateUploadModal) templateUploadModal.style.display = 'none';
+      });
+
+      btnDoTemplateUpload.addEventListener('click', async () => {
+        const file = templateFileInput.files[0];
+        const deviceType = templateDeviceType.value;
+
+        if (!file) {
+          alert("Lütfen bir excel dosyası seçin.");
+          return;
+        }
+
+        btnDoTemplateUpload.disabled = true;
+        btnDoTemplateUpload.textContent = 'Yükleniyor…';
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (json.length < 2) {
+              alert("Excel dosyası boş veya başlık dışında satır barındırmıyor.");
+              return;
+            }
+
+            const parsedCases = [];
+            json.slice(1).forEach(row => {
+              if (row && row.length > 0) {
+                parsedCases.push({
+                  testSuite: row[0] || 'Genel',
+                  priority: row[1] || 'Medium',
+                  testCase: row[2] || '',
+                  description: row[3] || ''
+                });
+              }
+            });
+
+            const validCases = parsedCases.filter(c => c.testCase.trim().length > 0);
+            if (validCases.length === 0) {
+              alert("Geçerli bir test senaryosu bulunamadı. Test Maddesi sütununun dolu olduğundan emin olun.");
+              return;
+            }
+
+            await uploadCategoryTemplateBulk(deviceType, validCases);
+            
+            templateUploadModal.style.display = 'none';
+            showToast(`🔄 ${deviceType} şablonu başarıyla güncellendi.`, "success");
+            
+            // Reload cases if active firmware belongs to this category
+            if (activeFirmware) {
+              const activeCategory = getDeviceTypeForModel(activeFirmware.model);
+              if (activeCategory === deviceType) {
+                await loadTestCases();
+              }
+            }
+          } catch (err) {
+            alert("Hata oluştu: " + err.message);
+          } finally {
+            btnDoTemplateUpload.disabled = false;
+            btnDoTemplateUpload.textContent = 'Şablonu Güncelle';
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      // ===== New Firmware Modal Handler =====
+      btnNewFirmware.addEventListener('click', () => {
+        newFwVersion.value = '';
+        newFwDate.value = new Date().toISOString().split('T')[0];
+        newFwBuild.value = '';
+        newFwDesc.value = '';
+        newFirmwareModal.style.display = 'flex';
+      });
+
+      newFirmwareClose.addEventListener('click', () => newFirmwareModal.style.display = 'none');
+      newFirmwareCancel.addEventListener('click', () => newFirmwareModal.style.display = 'none');
+      newFirmwareModal.addEventListener('click', (e) => {
+        if (e.target === newFirmwareModal) newFirmwareModal.style.display = 'none';
+      });
+
+      newFirmwareCreate.addEventListener('click', async () => {
+        const model = newFwModel.value;
+        const version = newFwVersion.value.trim();
+        const rDate = newFwDate.value;
+        const build = newFwBuild.value.trim();
+        const desc = newFwDesc.value.trim();
+
+        if (!model || !version) {
+          alert("Lütfen model ve sürüm alanlarını doldurun.");
+          return;
+        }
+
+        newFirmwareCreate.disabled = true;
+        newFirmwareCreate.textContent = 'Kaydediliyor…';
+
+        try {
+          const entry = {
+            model: model,
+            firmware: version,
+            releaseDate: rDate,
+            buildNo: build,
+            description: desc,
+            status: 'In Progress'
+          };
+
+          const newId = await addTestlinkFirmware(entry);
+          newFirmwareModal.style.display = 'none';
+          showToast("✅ Yeni sürüm başarıyla tanımlandı.", "success");
+          
+          selectedModel = model; // Preserves model selected state in listbox
+          await loadTree();
+          
+          // Auto select the new firmware
+          const createdFw = firmwaresList.find(f => f.id === newId);
+          if (createdFw) {
+            selectFirmware(createdFw);
+          }
+        } catch (err) {
+          alert("Yazılım sürümü eklenirken hata oluştu: " + err.message);
+        } finally {
+          newFirmwareCreate.disabled = false;
+          newFirmwareCreate.textContent = 'Kaydet';
+        }
+      });
+
+      // Delete Firmware Handler
+      btnDeleteFirmware.addEventListener('click', async () => {
+        if (!activeFirmware) return;
+        if (!confirm(`"${activeFirmware.model} — ${activeFirmware.firmware}" yazılım sürümünü ve bu sürüme ait tüm test senaryolarını veritabanından kalıcı olarak silmek istediğinizden emin misiniz?`)) return;
+
+        btnDeleteFirmware.disabled = true;
+        try {
+          await deleteTestlinkFirmware(activeFirmware.id);
+          showToast("🗑️ Sürüm ve testleri silindi.", "success");
+          activeFirmware = null;
+          
+          // reset UI to empty
+          emptyStatePanel.style.display = 'block';
+          firmwareInfoCard.style.display = 'none';
+          testCasesPanel.classList.add('d-none');
+          globalProgressSection.style.display = 'none';
+
+          await loadTree();
+        } catch (err) {
+          alert("Sürüm silinemedi: " + err.message);
+        } finally {
+          btnDeleteFirmware.disabled = false;
+        }
+      });
+
+      // ===== Toast and Helpers =====
+      let toastTimer = null;
+      function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `toast toast-visible toast-${type || 'success'}`;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.className = 'toast';
+          toastTimer = null;
+        }, 2500);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // ===== Initialize Page =====
+      loadTree();
+      applyRoleRestrictions();
+    })();
+  </script>
+</body>
+</html>

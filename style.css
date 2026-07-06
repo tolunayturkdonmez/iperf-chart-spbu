@@ -1068,3 +1068,96 @@ body {
   }
 }
 
+/* ===== Testlink Custom Themes & Dark Mode Compatibility ===== */
+body.dark-mode .card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .dataTables_wrapper {
+  color: var(--text-primary);
+}
+
+body.dark-mode table.dataTable {
+  border-color: var(--card-border);
+}
+
+body.dark-mode table.dataTable th {
+  border-bottom: 2px solid var(--card-border) !important;
+  color: var(--text-primary) !important;
+}
+
+body.dark-mode table.dataTable td {
+  border-bottom: 1px solid var(--card-border) !important;
+  color: var(--text-secondary);
+}
+
+body.dark-mode .page-link {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text-secondary) !important;
+}
+
+body.dark-mode .page-item.active .page-link {
+  background: var(--accent-gradient) !important;
+  border-color: var(--accent-primary) !important;
+  color: white !important;
+}
+
+body.dark-mode .dataTables_filter input,
+body.dark-mode .dataTables_length select {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+body.dark-mode .password-modal-overlay {
+  background: rgba(15, 23, 42, 0.94); /* dark glassmorphism for dark mode overlay */
+}
+
+body.dark-mode .password-modal-overlay .modal {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .modal-close {
+  color: var(--text-muted);
+}
+body.dark-mode .modal-close:hover {
+  color: var(--text-primary);
+}
+
+body.dark-mode .form-group input, 
+body.dark-mode .form-group select, 
+body.dark-mode .form-group textarea {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+body.dark-mode .form-group input:focus, 
+body.dark-mode .form-group select:focus, 
+body.dark-mode .form-group textarea:focus {
+  border-color: var(--accent-primary) !important;
+}
+
+body.dark-mode .tree-child-list {
+  border-left: 1px dashed var(--card-border);
+  margin-left: 10px;
+}
+
+/* Custom styling to align tree list padding */
+.tree-child-list {
+  list-style: none;
+  padding-left: 14px;
+}
+.tree-node i {
+  width: 16px;
+  text-align: center;
+}
+
+
