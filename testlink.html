@@ -941,7 +941,17 @@
             </select>
           </div>
 
-
+          <!-- Öncelik Filtreleme Alanı (Sürüm seçildiğinde d-flex ile gösterilir) -->
+          <div id="priorityFilterContainer" style="display:none; flex-direction:column; gap:8px; border-top: 1px dashed var(--card-border); padding-top: 12px; margin-top: 8px;">
+            <label class="fw-bold text-secondary mb-1" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">Öncelik Filtresi</label>
+            <div class="d-flex align-items-center gap-2">
+              <select id="priorityFilterSelect" class="form-select form-select-sm" style="font-size:0.8rem; border-radius: var(--radius-sm); flex-grow: 1;">
+                <option value="" disabled selected>Öncelik Seçin</option>
+              </select>
+              <button class="btn btn-sm btn-primary" type="button" id="btnApplyPriorityFilter" style="font-size: 0.8rem; font-weight:600; border-radius: var(--radius-sm); padding: 5px 10px;">Filtrele</button>
+              <button class="btn btn-sm btn-outline-danger d-none" type="button" id="btnClearPriorityFilter" style="font-size: 0.8rem; font-weight:600; border-radius: var(--radius-sm); padding: 5px 10px;">Kaldır</button>
+            </div>
+          </div>
         </div>
 
         <!-- 2. Test Senaryoları Klasör Listesi (Modern Akordeon) -->
@@ -1215,6 +1225,12 @@
       const tableControls = document.getElementById('tableControls');
       const fileNameLabel = document.getElementById('fileNameLabel');
 
+      // Priority filter elements
+      const priorityFilterContainer = document.getElementById('priorityFilterContainer');
+      const priorityFilterSelect = document.getElementById('priorityFilterSelect');
+      const btnApplyPriorityFilter = document.getElementById('btnApplyPriorityFilter');
+      const btnClearPriorityFilter = document.getElementById('btnClearPriorityFilter');
+
 
 
       // Theme toggle
@@ -1298,6 +1314,7 @@
       let activeRole = 'Admin';
       let activeCaseInDrawer = null;
       const expandedSuites = new Set();
+      let activePriorityFilter = null;
 
       // ===== Init & Themes =====
       if (localStorage.getItem('theme') === 'dark') {
@@ -1357,6 +1374,55 @@
           btnSaveResult.classList.add('d-none');
         }
       }
+
+      // ===== Priority Filtering Handlers =====
+      function resetPriorityFilter() {
+        activePriorityFilter = null;
+        priorityFilterSelect.value = '';
+        btnClearPriorityFilter.classList.add('d-none');
+      }
+
+      function populatePriorityFilterDropdown() {
+        const priorities = new Set();
+        activeCases.forEach(c => {
+          if (c.priority !== undefined && c.priority !== null && String(c.priority).trim() !== '') {
+            priorities.add(String(c.priority).trim());
+          }
+        });
+
+        priorityFilterSelect.innerHTML = '<option value="" disabled selected>Öncelik Seçin</option>';
+        const sortedPriorities = Array.from(priorities).sort((a, b) => {
+          const numA = Number(a);
+          const numB = Number(b);
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numA - numB;
+          }
+          return a.localeCompare(b);
+        });
+
+        sortedPriorities.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          priorityFilterSelect.appendChild(opt);
+        });
+      }
+
+      btnApplyPriorityFilter.addEventListener('click', () => {
+        const val = priorityFilterSelect.value;
+        if (!val) {
+          alert("Lütfen bir öncelik seçin.");
+          return;
+        }
+        activePriorityFilter = val;
+        btnClearPriorityFilter.classList.remove('d-none');
+        renderTestCasesAccordion();
+      });
+
+      btnClearPriorityFilter.addEventListener('click', () => {
+        resetPriorityFilter();
+        renderTestCasesAccordion();
+      });
 
 
 
@@ -1436,6 +1502,8 @@
         caseDetailCard.classList.add('d-none');
         testScenariosCard.style.setProperty('display', 'none', 'important');
         testScenariosCard.classList.remove('fade-in-smooth');
+        priorityFilterContainer.style.display = 'none';
+        resetPriorityFilter();
       });
 
       // Version selection change handler
@@ -1475,16 +1543,23 @@
         void globalProgressSection.offsetWidth;
         void testScenariosCard.offsetWidth;
 
+        // Reset filter elements animation state too
+        priorityFilterContainer.classList.remove('fade-in-smooth');
+        void priorityFilterContainer.offsetWidth;
+
         testCasesPanel.classList.remove('d-none');
         dashboardStatsSection.style.display = 'block'; // Sürüm tıklandığında istatistik panelini göster
         globalProgressSection.style.display = 'block'; // İlerleme durumunu senkron göster
         testScenariosCard.style.setProperty('display', 'flex', 'important');
+        priorityFilterContainer.style.display = 'flex';
+        resetPriorityFilter();
 
         // Add smooth transitions
         testCasesPanel.classList.add('fade-in-smooth');
         dashboardStatsSection.classList.add('fade-in-smooth');
         globalProgressSection.classList.add('fade-in-smooth');
         testScenariosCard.classList.add('fade-in-smooth');
+        priorityFilterContainer.classList.add('fade-in-smooth');
 
         await loadTestCases();
         applyRoleRestrictions();
@@ -1517,6 +1592,7 @@
             };
           });
 
+          populatePriorityFilterDropdown();
           renderTestCasesAccordion();
         } catch (e) {
           console.error("Test cases loading error:", e);
@@ -1602,9 +1678,16 @@
       function renderTestCasesAccordion() {
         calculateStats();
 
-        if (activeCases.length === 0) {
-          importExcelSection.classList.remove('d-none');
-          testSuitesAccordion.style.display = 'none';
+        const filteredCases = activePriorityFilter ? activeCases.filter(c => String(c.priority !== undefined && c.priority !== null ? c.priority : '').trim() === activePriorityFilter) : activeCases;
+
+        if (filteredCases.length === 0) {
+          if (activeCases.length === 0) {
+            importExcelSection.classList.remove('d-none');
+            testSuitesAccordion.style.display = 'none';
+          } else {
+            testSuitesAccordion.style.display = 'block';
+            testSuitesAccordion.innerHTML = '<div class="p-3 text-center text-muted" style="font-size:0.78rem;">Bu önceliğe uygun test maddesi bulunamadı.</div>';
+          }
           return;
         }
 
@@ -1614,7 +1697,7 @@
 
         // Group by testSuite
         const grouped = {};
-        activeCases.forEach(c => {
+        filteredCases.forEach(c => {
           if (!grouped[c.testSuite]) grouped[c.testSuite] = [];
           grouped[c.testSuite].push(c);
         });
@@ -1744,7 +1827,7 @@
         caseDetailCard.classList.remove('d-none');
 
         detailCardTitle.textContent = "Test Detayları";
-        detPriority.textContent = c.priority || 'Medium';
+        detPriority.textContent = (c.priority !== undefined && c.priority !== null && String(c.priority).trim() !== '') ? c.priority : 'Medium';
         
         // Populate Description view
         detDescriptionView.innerHTML = c.description ? formatDescriptionText(c.description) : '<span class="text-muted" style="font-style: italic;">Açıklama/prosedür tanımlanmamış.</span>';
